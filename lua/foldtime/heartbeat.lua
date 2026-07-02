@@ -9,6 +9,7 @@ local M = {}
 local interval_ms = 120 * 1000
 local exclude_filetypes = {}
 local last_sent = {} -- absolute file path → vim.uv.now() of the last send
+local repo_cache = {} -- directory → is it inside a git repo?
 
 --- Last heartbeat actually sent (any file), for :checkhealth.
 M.last_send = nil
@@ -24,6 +25,17 @@ end
 
 function M.reset()
 	last_sent = {}
+	repo_cache = {}
+end
+
+--- Memoized vim.fs.root: the ancestor walk is too slow for CursorMoved,
+--- and a directory's repo-ness doesn't change mid-session (a stale entry
+--- lasts until the next setup()).
+local function in_git_repo(dir)
+	if repo_cache[dir] == nil then
+		repo_cache[dir] = vim.fs.root(dir, ".git") ~= nil
+	end
+	return repo_cache[dir]
 end
 
 --- Is this buffer a real file worth tracking? Returns its path, or nil.
@@ -40,7 +52,13 @@ local function eligible_file(buf)
 		return nil
 	end
 	-- The dirname becomes vim.system's cwd, which errors if it's gone.
-	if not vim.uv.fs_stat(vim.fs.dirname(name)) then
+	local dir = vim.fs.dirname(name)
+	if not vim.uv.fs_stat(dir) then
+		return nil
+	end
+	-- Outside a repo the CLI would no-op anyway — but it logs the failure,
+	-- and auto-fired heartbeats would slowly fill ~/.foldtime/error.log.
+	if not in_git_repo(dir) then
 		return nil
 	end
 	return name

@@ -40,9 +40,10 @@ local function check(name, fn)
 	failed = failed or not ok
 end
 
--- One temp workspace for all cases.
+-- One temp workspace for all cases. A bare .git entry is all the repo
+-- guard looks for (vim.fs.root) — no real git needed.
 local dir = vim.fn.tempname()
-vim.fn.mkdir(dir, "p")
+vim.fn.mkdir(dir .. "/.git", "p")
 local function workspace_file(name)
 	local path = dir .. "/" .. name
 	local f = assert(io.open(path, "w"))
@@ -106,6 +107,18 @@ check(":FoldTime disable stops sends, enable resumes them", function()
 	local lines = settled_lines(before + 1)
 	assert(#lines == before + 1, "enable did not resume heartbeats")
 	assert(lines[#lines] == dir .. "|heartbeat --file " .. file3, "unexpected call: " .. lines[#lines])
+end)
+
+check("files outside a git repo send nothing", function()
+	local before = #shim_lines()
+	local outside = vim.fn.tempname()
+	vim.fn.mkdir(outside, "p")
+	local f = assert(io.open(outside .. "/note.txt", "w"))
+	f:write("hello\n")
+	f:close()
+	vim.cmd.edit(outside .. "/note.txt")
+	vim.wait(300)
+	assert(#shim_lines() == before, "non-repo file produced a heartbeat")
 end)
 
 check("status cache feeds the lualine component", function()

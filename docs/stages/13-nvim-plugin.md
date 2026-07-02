@@ -29,9 +29,12 @@ status --json`, the same way.
   (`vim.system` throws synchronously on ENOENT); a spawn failure notifies
   once, is memoized for `:checkhealth`, and never reaches an autocmd
 - [x] `lua/foldtime/heartbeat.lua` — guard chain (cheapest first: buftype,
-  unnamed, `scheme://` buffers, `exclude_filetypes`, vanished dirname) and a
-  per-file throttle: activity sends at most every `heartbeat_interval`
-  (120s), writes always send and refresh the window
+  unnamed, `scheme://` buffers, `exclude_filetypes`, vanished dirname, and a
+  memoized not-in-a-git-repo check — the CLI would no-op anyway, but it logs
+  the failure, and auto-fired heartbeats would slowly fill
+  `~/.foldtime/error.log`) and a per-file throttle: activity sends at most
+  every `heartbeat_interval` (120s), writes always send and refresh the
+  window
 - [x] `lua/foldtime/init.lua` — `setup()` (idempotent: augroup with
   `clear = true`), activity autocmds (`BufEnter`, `CursorMoved(I)`,
   `TextChanged(I)`, `BufWritePost`), dormant-with-one-warning when the

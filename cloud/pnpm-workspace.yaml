@@ -1,2 +1,8 @@
+packages:
+  - web
+
 allowBuilds:
   esbuild: true
+  lightningcss: true
+  sharp: true
+  workerd: true

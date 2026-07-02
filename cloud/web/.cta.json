@@ -1,0 +1,27 @@
+{
+  "projectName": "web",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "npm",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {
+    "CONVEX_DEPLOYMENT": "fast-ermine-429",
+    "VITE_CONVEX_URL": "https://fast-ermine-429.convex.cloud"
+  },
+  "git": false,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "cloudflare",
+    "workos",
+    "convex",
+    "compiler",
+    "table",
+    "t3env"
+  ]
+}

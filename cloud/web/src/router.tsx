@@ -1,38 +1,86 @@
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
-import { QueryClient } from '@tanstack/react-query'
-import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
-import { ConvexQueryClient } from '@convex-dev/react-query'
-import { routeTree } from './routeTree.gen'
-import { env } from './env'
-
+import { ConvexQueryClient } from "@convex-dev/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { createRouter } from "@tanstack/react-router";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import {
+	AuthKitProvider,
+	useAccessToken,
+	useAuth,
+} from "@workos/authkit-tanstack-react-start/client";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import { useCallback, useMemo } from "react";
+import { env } from "./env";
+import { routeTree } from "./routeTree.gen";
 export function getRouter() {
-  // Clients are created per-router (per-request on the server) so SSR
-  // requests never share auth state or subscriptions.
-  const convexQueryClient = new ConvexQueryClient(env.VITE_CONVEX_URL)
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        queryKeyHashFn: convexQueryClient.hashFn(),
-        queryFn: convexQueryClient.queryFn(),
-      },
-    },
-  })
-  convexQueryClient.connect(queryClient)
+	const CONVEX_URL = env.VITE_CONVEX_URL;
+	if (!CONVEX_URL) {
+		throw new Error("missing VITE_CONVEX_URL env var");
+	}
+	const convex = new ConvexReactClient(CONVEX_URL);
+	const convexQueryClient = new ConvexQueryClient(convex);
 
-  const router = createTanStackRouter({
-    routeTree,
-    context: { queryClient, convexClient: convexQueryClient.convexClient },
-    scrollRestoration: true,
-    defaultPreload: 'intent',
-    defaultPreloadStaleTime: 0,
-  })
-  setupRouterSsrQueryIntegration({ router, queryClient })
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				queryKeyHashFn: convexQueryClient.hashFn(),
+				queryFn: convexQueryClient.queryFn(),
+				gcTime: 5000,
+			},
+		},
+	});
+	convexQueryClient.connect(queryClient);
 
-  return router
+	const router = createRouter({
+		routeTree,
+		defaultPreload: "intent",
+		scrollRestoration: true,
+		defaultPreloadStaleTime: 0, // Let React Query handle all caching
+		defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
+		defaultNotFoundComponent: () => <p>not found</p>,
+		context: { queryClient, convexClient: convex, convexQueryClient },
+		// AuthKitProvider uses TanStack Router hooks internally, so it must
+		// render inside router context. InnerWrap renders inside the router.
+		InnerWrap: ({ children }) => (
+			<AuthKitProvider>
+				<ConvexProviderWithAuth
+					client={convexQueryClient.convexClient}
+					useAuth={useAuthFromWorkOS}
+				>
+					{children}
+				</ConvexProviderWithAuth>
+			</AuthKitProvider>
+		),
+	});
+	setupRouterSsrQueryIntegration({ router, queryClient });
+
+	return router;
 }
 
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: ReturnType<typeof getRouter>
-  }
+function useAuthFromWorkOS() {
+	const { loading, user } = useAuth();
+	const { getAccessToken, refresh } = useAccessToken();
+
+	const fetchAccessToken = useCallback(
+		async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+			if (!user) {
+				return null;
+			}
+
+			if (forceRefreshToken) {
+				return (await refresh()) ?? null;
+			}
+
+			return (await getAccessToken()) ?? null;
+		},
+		[user, refresh, getAccessToken],
+	);
+
+	return useMemo(
+		() => ({
+			isLoading: loading,
+			isAuthenticated: !!user,
+			fetchAccessToken,
+		}),
+		[loading, user, fetchAccessToken],
+	);
 }

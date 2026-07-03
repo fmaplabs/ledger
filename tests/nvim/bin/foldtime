@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Test stand-in for the foldtime binary: record every invocation (cwd and
-# argv) to $FOLDTIME_SHIM_LOG, answer `status` with canned JSON, exit 0.
-echo "$PWD|$*" >> "${FOLDTIME_SHIM_LOG:?}"
-if [ "$1" = "status" ]; then
-  echo '{"project":"foldTime","task":"main","trackedTodayMs":3600000,"lastHeartbeatMs":1751470000000,"idleThresholdMinutes":15}'
-fi
-exit 0

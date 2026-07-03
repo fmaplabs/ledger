@@ -1,6 +1,6 @@
 --- Statusline component: today's tracked time for the current project.
 --- Usable from lualine (or any statusline) as two plain functions:
----   { require("foldtime.lualine").get, cond = require("foldtime.lualine").has }
+---   { require("ledger.lualine").get, cond = require("ledger.lualine").has }
 
 local M = {}
 
@@ -16,24 +16,24 @@ local function fmt(ms)
 end
 
 function M.get()
-	if not require("foldtime").enabled then
+	if not require("ledger").enabled then
 		return "󰔛 off"
 	end
-	local data = require("foldtime.status").get()
+	local data = require("ledger.status").get()
 	return "󰔛 " .. fmt(data and data.trackedTodayMs or 0)
 end
 
 --- Show the segment only when there is something to say: setup ran, the
 --- binary exists, and we're in a repo (or tracking is off, worth surfacing).
 function M.has()
-	local foldtime = require("foldtime")
-	if not foldtime.did_setup or not require("foldtime.cli").available() then
+	local ledger = require("ledger")
+	if not ledger.did_setup or not require("ledger.cli").available() then
 		return false
 	end
-	if not foldtime.enabled then
+	if not ledger.enabled then
 		return true
 	end
-	local data = require("foldtime.status").get()
+	local data = require("ledger.status").get()
 	return data ~= nil and data.project ~= nil
 end
 

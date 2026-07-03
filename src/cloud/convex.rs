@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 
 /// Connect/overall deadlines for one HTTP call. The hook budget is tight on
 /// purpose: a best-effort push after `git commit` must never make a commit
-/// feel slow, while an interactive `foldtime sync` can afford to wait.
+/// feel slow, while an interactive `ledger sync` can afford to wait.
 #[derive(Debug, Clone, Copy)]
 pub struct Timeouts {
     pub connect: Duration,
@@ -13,7 +13,7 @@ pub struct Timeouts {
 }
 
 impl Timeouts {
-    /// For the loud `foldtime sync` command.
+    /// For the loud `ledger sync` command.
     pub fn interactive() -> Self {
         Timeouts {
             connect: Duration::from_secs(10),

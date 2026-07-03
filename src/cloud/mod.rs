@@ -36,28 +36,28 @@ pub struct SyncOutcome {
 /// that as a silent no-op.
 pub fn sync_all(
     conn: &mut Connection,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     settings: &Settings,
     timeouts: Timeouts,
     push_only: bool,
 ) -> Result<Option<SyncOutcome>> {
-    let Some(mut token) = auth::get_valid_token(settings, foldtime_home, timeouts)? else {
+    let Some(mut token) = auth::get_valid_token(settings, ledger_home, timeouts)? else {
         return Ok(None);
     };
     let client = ConvexClient::new(&settings.convex_url()?, timeouts);
 
-    let pushed = push_dirty_rows(conn, foldtime_home, settings, timeouts, &client, &mut token)?;
+    let pushed = push_dirty_rows(conn, ledger_home, settings, timeouts, &client, &mut token)?;
     let pulled = if push_only {
         0
     } else {
-        pull_new_rows(conn, foldtime_home, settings, timeouts, &client, &mut token)?
+        pull_new_rows(conn, ledger_home, settings, timeouts, &client, &mut token)?
     };
     Ok(Some(SyncOutcome { pushed, pulled }))
 }
 
 fn push_dirty_rows(
     conn: &mut Connection,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     settings: &Settings,
     timeouts: Timeouts,
     client: &ConvexClient,
@@ -76,7 +76,7 @@ fn push_dirty_rows(
         });
         // Server-side upsert by (userId, uuid) makes retrying a batch whose
         // mark_clean never ran harmless.
-        with_auth(settings, foldtime_home, timeouts, token, |t| {
+        with_auth(settings, ledger_home, timeouts, token, |t| {
             client.mutation(t, "sync:push", args.clone())
         })
         .context("pushing heartbeats")?;
@@ -92,7 +92,7 @@ fn push_dirty_rows(
 
 fn pull_new_rows(
     conn: &mut Connection,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     settings: &Settings,
     timeouts: Timeouts,
     client: &ConvexClient,
@@ -106,7 +106,7 @@ fn pull_new_rows(
             "limit": BATCH_SIZE,
             "excludeDeviceId": settings.device_id,
         });
-        let value = with_auth(settings, foldtime_home, timeouts, token, |t| {
+        let value = with_auth(settings, ledger_home, timeouts, token, |t| {
             client.query(t, "sync:pull", args.clone())
         })
         .context("pulling heartbeats")?;
@@ -134,7 +134,7 @@ fn pull_new_rows(
 /// `auth::refresh` before it returns) and retry exactly once.
 fn with_auth(
     settings: &Settings,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     timeouts: Timeouts,
     token: &mut String,
     mut call: impl FnMut(&str) -> Result<Value, ApiError>,
@@ -142,9 +142,9 @@ fn with_auth(
     match call(token) {
         Ok(value) => Ok(value),
         Err(ApiError::Unauthorized) => {
-            let credentials = settings::load_credentials(foldtime_home)?
+            let credentials = settings::load_credentials(ledger_home)?
                 .context("access token rejected and no stored credentials to refresh")?;
-            *token = auth::refresh(settings, foldtime_home, &credentials.refresh_token, timeouts)?
+            *token = auth::refresh(settings, ledger_home, &credentials.refresh_token, timeouts)?
                 .access_token;
             call(token).map_err(anyhow::Error::from)
         }
@@ -243,7 +243,7 @@ mod tests {
     /// unless a test asks for one.
     fn harness(server: &MockServer) -> Harness {
         let home = tempfile::tempdir().unwrap();
-        let conn = db::open_db(&home.path().join("foldtime.db"), DEVICE).unwrap();
+        let conn = db::open_db(&home.path().join("ledger.db"), DEVICE).unwrap();
         let settings = Settings {
             device_id: DEVICE.into(),
             device_name: "laptop".into(),
@@ -466,7 +466,7 @@ mod tests {
         // `{:#}` renders the whole context chain; the hint sits below the
         // outer "pushing heartbeats" context.
         let rendered = format!("{err:#}");
-        assert!(rendered.contains("foldtime login"), "got: {rendered}");
+        assert!(rendered.contains("ledger login"), "got: {rendered}");
     }
 
     #[test]
@@ -515,7 +515,7 @@ mod tests {
         page2.assert();
         assert_eq!(outcome.pulled, 3);
         assert_eq!(db::get_pull_cursor(&h.conn).unwrap(), 20_000);
-        // Pulled rows show up for `foldtime report`'s query path.
+        // Pulled rows show up for `ledger report`'s query path.
         let hbs = db::query_heartbeats(&h.conn, None, None, None, None).unwrap();
         assert_eq!(hbs.len(), 3);
         // ...but never in this device's push batch.

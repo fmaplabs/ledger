@@ -1,8 +1,8 @@
---- Guards and per-file throttling in front of `foldtime heartbeat`.
+--- Guards and per-file throttling in front of `ledger heartbeat`.
 --- The autocmd handlers land here on every keystroke, so the fast path is
 --- one table lookup and a monotonic-clock compare.
 
-local cli = require("foldtime.cli")
+local cli = require("ledger.cli")
 
 local M = {}
 
@@ -57,7 +57,7 @@ local function eligible_file(buf)
 		return nil
 	end
 	-- Outside a repo the CLI would no-op anyway — but it logs the failure,
-	-- and auto-fired heartbeats would slowly fill ~/.foldtime/error.log.
+	-- and auto-fired heartbeats would slowly fill ~/.ledger/error.log.
 	if not in_git_repo(dir) then
 		return nil
 	end

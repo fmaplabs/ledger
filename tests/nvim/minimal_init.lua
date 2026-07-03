@@ -5,4 +5,4 @@ local here = vim.fs.dirname(debug.getinfo(1, "S").source:sub(2))
 local root = vim.fs.dirname(vim.fs.dirname(here))
 vim.opt.rtp:prepend(root)
 vim.env.PATH = here .. "/bin:" .. vim.env.PATH
-vim.env.FOLDTIME_SHIM_LOG = vim.fn.tempname()
+vim.env.LEDGER_SHIM_LOG = vim.fn.tempname()

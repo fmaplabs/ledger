@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors;
 
-pub const CONFIG_FILE_NAME: &str = ".foldtime.json";
+pub const CONFIG_FILE_NAME: &str = ".ledger.json";
 pub const DEFAULT_IDLE_THRESHOLD_MINUTES: u32 = 15;
 
-/// Optional per-repo config, checked into the repo root as `.foldtime.json`.
+/// Optional per-repo config, checked into the repo root as `.ledger.json`.
 /// Every field is optional — absence means "use the default".
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -20,7 +20,7 @@ pub struct ProjectConfig {
     pub idle_threshold_minutes: Option<u32>,
 }
 
-/// Load `.foldtime.json` from the repo root, tolerantly: a missing file is
+/// Load `.ledger.json` from the repo root, tolerantly: a missing file is
 /// the normal case (defaults), and a malformed one must never break a
 /// heartbeat — it falls back to defaults and leaves a warning in the error
 /// log instead.
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn unknown_fields_like_dollar_schema_are_ignored() {
-        let json = r#"{"$schema": "./.foldtime.schema.json", "project": "acme"}"#;
+        let json = r#"{"$schema": "./.ledger.schema.json", "project": "acme"}"#;
         let config: ProjectConfig = serde_json::from_str(json).unwrap();
         assert_eq!(config.project.as_deref(), Some("acme"));
         assert_eq!(config.idle_threshold_minutes, None);
@@ -105,7 +105,7 @@ mod tests {
         let warning = warning.borrow();
         let warning = warning.as_deref().unwrap();
         assert!(warning.contains("malformed"), "got: {warning}");
-        assert!(warning.contains(".foldtime.json"), "got: {warning}");
+        assert!(warning.contains(".ledger.json"), "got: {warning}");
     }
 
     #[test]

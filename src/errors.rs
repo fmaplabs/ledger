@@ -8,11 +8,11 @@ use anyhow::Result;
 
 use crate::paths;
 
-/// Append one timestamped line to `~/.foldtime/error.log`. Best-effort: if
+/// Append one timestamped line to `~/.ledger/error.log`. Best-effort: if
 /// the log itself can't be written there is nowhere left to report to, so
 /// the failure is swallowed.
 pub fn log_error(message: &str) {
-    let Ok(home) = paths::ensure_foldtime_home() else {
+    let Ok(home) = paths::ensure_ledger_home() else {
         return;
     };
     log_error_to(&paths::error_log_path(&home), message);
@@ -38,7 +38,7 @@ pub fn run_silently<F>(f: F)
 where
     F: FnOnce() -> Result<()>,
 {
-    let log_path = paths::ensure_foldtime_home()
+    let log_path = paths::ensure_ledger_home()
         .ok()
         .map(|home| paths::error_log_path(&home));
     run_silently_at(log_path.as_deref(), f);

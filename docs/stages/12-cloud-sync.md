@@ -1,12 +1,12 @@
 # Stage 12: Cloud sync via Convex
 
-Heartbeats recorded on any machine appear in `foldtime report` on every
+Heartbeats recorded on any machine appear in `ledger report` on every
 machine. Three new pieces: a Convex backend (in-repo under `cloud/`), account
 auth via WorkOS AuthKit's CLI device-authorization flow, and a
 device-ownership delta-sync engine in the CLI.
 
 **Sync model**: every row is owned by the `device_id` (a per-machine UUID in
-`~/.foldtime/config.json`) that created it. Only the owner pushes a row;
+`~/.ledger/config.json`) that created it. Only the owner pushes a row;
 other machines pull read-only copies — conflicts are impossible by
 construction. Push sends local `dirty = 1` rows; pull follows a cursor over
 the server-side `syncedAt` timestamp, which is set by the push mutation so
@@ -14,12 +14,12 @@ client clocks never feed cursors.
 
 ## Tasks
 
-- [x] `src/settings.rs` — machine-scoped `~/.foldtime/config.json`
-  (device id + name, endpoint overrides) and `~/.foldtime/credentials.json`
+- [x] `src/settings.rs` — machine-scoped `~/.ledger/config.json`
+  (device id + name, endpoint overrides) and `~/.ledger/credentials.json`
   (WorkOS token pair). Atomic 0600 writes; malformed config is a hard error
   (regenerating would mint a new device id); env precedence
-  `FOLDTIME_CONVEX_URL` / `FOLDTIME_WORKOS_CLIENT_ID` /
-  `FOLDTIME_WORKOS_API_URL` > config field > baked-in default
+  `LEDGER_CONVEX_URL` / `LEDGER_WORKOS_CLIENT_ID` /
+  `LEDGER_WORKOS_API_URL` > config field > baked-in default
 - [x] `src/db.rs` — versioned migrations via `PRAGMA user_version`; v2 adds
   `uuid` (unique), `device_id`, `dirty` to `heartbeats` plus the
   `sync_state` cursor table, all in one transaction. New sync helpers:
@@ -48,7 +48,7 @@ client clocks never feed cursors.
 - [x] `src/cloud/mod.rs` — `sync_all` push/pull loops (batches of 500),
   `with_auth` refresh-and-retry-once on 401, stuck-cursor and
   nothing-cleaned loop guards
-- [x] Commands: `foldtime login` / `logout` / `sync [--push-only]`; loud,
+- [x] Commands: `ledger login` / `logout` / `sync [--push-only]`; loud,
   like `init`/`report`
 - [x] `hook-commit` ends with a best-effort push (2s connect / 5s overall
   timeouts, inside `run_silently`): logged out → silent skip, network down →
@@ -68,9 +68,9 @@ client clocks never feed cursors.
   its own auto-provisioned WorkOS environment); `DEFAULT_CONVEX_URL` /
   `DEFAULT_WORKOS_CLIENT_ID` in `src/settings.rs` point there. The dev
   deployment (`fast-ermine-429`) remains for `npx convex dev`
-- [x] E2E smoke against the real stack: two `FOLDTIME_HOME`s, device-flow
+- [x] E2E smoke against the real stack: two `LEDGER_HOME`s, device-flow
   login on both, heartbeat + commit under one (post-commit hook pushed to
-  Convex in a 0.25s commit), `foldtime sync` + `report` under the other
+  Convex in a 0.25s commit), `ledger sync` + `report` under the other
   shows the merged session with its commit hash
 
 ## Why the endpoint defaults are compiled in
@@ -78,11 +78,11 @@ client clocks never feed cursors.
 Settings resolve in three levels (`src/settings.rs`), highest precedence
 first:
 
-1. **Env var** — `FOLDTIME_CONVEX_URL` / `FOLDTIME_WORKOS_CLIENT_ID` /
-   `FOLDTIME_WORKOS_API_URL`. Ephemeral overrides: the integration tests
+1. **Env var** — `LEDGER_CONVEX_URL` / `LEDGER_WORKOS_CLIENT_ID` /
+   `LEDGER_WORKOS_API_URL`. Ephemeral overrides: the integration tests
    point the binary at httpmock this way, and it's how you'd target a
    staging backend ad hoc.
-2. **`~/.foldtime/config.json`** — `convexUrl` / `workosClientId`.
+2. **`~/.ledger/config.json`** — `convexUrl` / `workosClientId`.
    Persistent per-machine override with no env plumbing.
 3. **Baked-in `DEFAULT_*` consts** — only when neither of the above is set.
 
@@ -92,7 +92,7 @@ inherit a shell profile (GUI editors, git GUIs, anything not launched from a
 login shell). If the backend address lived only in an env var, the silent
 hook push would quietly no-op on any machine where the var didn't reach that
 process's environment — invisible by design, since the hook never fails
-loudly. Compiled-in defaults make `cargo install` + `foldtime login` fully
+loudly. Compiled-in defaults make `cargo install` + `ledger login` fully
 zero-config regardless of how the process is spawned, the same way `gh`
 knows about github.com.
 

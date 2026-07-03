@@ -1,7 +1,7 @@
-# foldTime Learning Stages
+# ledger Learning Stages
 
-Task + resource reference for building the foldTime core CLI, one Rust concept
-at a time. See `docs/foldTime.md` for the original requirements and the
+Task + resource reference for building the ledger core CLI, one Rust concept
+at a time. See `docs/ledger.md` for the original requirements and the
 architecture/collaboration-model discussion for the full rationale behind the
 ordering below.
 
@@ -21,14 +21,14 @@ the "Resources" links are there for when a task doesn't make sense yet.
 | 3 | [paths.rs — filesystem locations](03-paths.md) | Complete |
 | 4 | [db.rs — SQLite storage](04-db.md) | Complete |
 | 5 | [git.rs — shelling out to git](05-git.md) | Complete |
-| 6 | [config.rs — .foldtime.json](06-config.md) | Complete |
+| 6 | [config.rs — .ledger.json](06-config.md) | Complete |
 | 7 | [project.rs — identity resolution](07-project.md) | Complete |
 | 8 | [errors.rs — never fail loudly](08-errors.md) | Complete |
 | 9 | [cli.rs + commands/ — real implementations](09-commands.md) | Complete |
 | 10 | [integration_init_hook.rs — end-to-end test](10-integration-test.md) | Complete |
 | 11 | [Polish](11-polish.md) | Complete |
 | 12 | [Cloud sync via Convex](12-cloud-sync.md) | Complete |
-| 13 | [Neovim plugin (foldtime.nvim)](13-nvim-plugin.md) | Complete |
+| 13 | [Neovim plugin (ledger.nvim)](13-nvim-plugin.md) | Complete |
 
 ## Sequencing note
 

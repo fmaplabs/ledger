@@ -1,10 +1,10 @@
---- foldtime.nvim — automatic heartbeats for the foldTime time tracker.
+--- ledger.nvim — automatic heartbeats for the ledger time tracker.
 --- setup() is idempotent: safe to call again with new options at any time.
 
 local M = {}
 
 local defaults = {
-	cmd = "foldtime", -- binary name, or an absolute path if not on PATH
+	cmd = "ledger", -- binary name, or an absolute path if not on PATH
 	heartbeat_interval = 120, -- seconds; per-file throttle between heartbeats
 	status_refresh_interval = 30, -- seconds; statusline data refresh cadence
 	exclude_filetypes = {},
@@ -20,9 +20,9 @@ function M.setup(opts)
 	M.options = vim.tbl_deep_extend("force", defaults, opts or {})
 	M.did_setup = true
 
-	local cli = require("foldtime.cli")
-	local heartbeat = require("foldtime.heartbeat")
-	local status = require("foldtime.status")
+	local cli = require("ledger.cli")
+	local heartbeat = require("ledger.heartbeat")
+	local status = require("ledger.status")
 	cli.setup(M.options)
 	heartbeat.setup(M.options)
 
@@ -30,7 +30,7 @@ function M.setup(opts)
 		if not warned_missing then
 			warned_missing = true
 			vim.notify(
-				("foldtime.nvim: %q not found — heartbeats off. Set opts.cmd or run `cargo install --path <foldTime repo>`."):format(
+				("ledger.nvim: %q not found — heartbeats off. Set opts.cmd or run `cargo install --path <ledger repo>`."):format(
 					M.options.cmd
 				),
 				vim.log.levels.WARN
@@ -39,7 +39,7 @@ function M.setup(opts)
 		return -- dormant: no autocmds, nothing to clean up
 	end
 
-	local group = vim.api.nvim_create_augroup("foldtime", { clear = true })
+	local group = vim.api.nvim_create_augroup("ledger", { clear = true })
 	vim.api.nvim_create_autocmd({ "BufEnter", "CursorMoved", "CursorMovedI", "TextChanged", "TextChangedI" }, {
 		group = group,
 		callback = function(ev)

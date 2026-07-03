@@ -5,37 +5,37 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow};
 
-/// Env var that overrides the default `~/.foldtime` location. Set by the
+/// Env var that overrides the default `~/.ledger` location. Set by the
 /// integration tests (and usable by anyone who wants the data elsewhere).
-pub const HOME_ENV_VAR: &str = "FOLDTIME_HOME";
+pub const HOME_ENV_VAR: &str = "LEDGER_HOME";
 
-const HOME_DIR_NAME: &str = ".foldtime";
-const DB_FILE_NAME: &str = "foldtime.db";
+const HOME_DIR_NAME: &str = ".ledger";
+const DB_FILE_NAME: &str = "ledger.db";
 const ERROR_LOG_FILE_NAME: &str = "error.log";
 
-/// Resolve the foldtime home directory without touching the filesystem:
-/// `$FOLDTIME_HOME` if set (and non-empty), otherwise `~/.foldtime`.
-pub fn foldtime_home() -> Result<PathBuf> {
+/// Resolve the ledger home directory without touching the filesystem:
+/// `$LEDGER_HOME` if set (and non-empty), otherwise `~/.ledger`.
+pub fn ledger_home() -> Result<PathBuf> {
     resolve_home(env::var_os(HOME_ENV_VAR), dirs::home_dir())
 }
 
-/// Resolve the foldtime home directory and create it if it doesn't exist.
-pub fn ensure_foldtime_home() -> Result<PathBuf> {
-    let home = foldtime_home()?;
+/// Resolve the ledger home directory and create it if it doesn't exist.
+pub fn ensure_ledger_home() -> Result<PathBuf> {
+    let home = ledger_home()?;
     fs::create_dir_all(&home)
-        .with_context(|| format!("creating foldtime home at {}", home.display()))?;
+        .with_context(|| format!("creating ledger home at {}", home.display()))?;
     Ok(home)
 }
 
-pub fn db_path(foldtime_home: &Path) -> PathBuf {
-    foldtime_home.join(DB_FILE_NAME)
+pub fn db_path(ledger_home: &Path) -> PathBuf {
+    ledger_home.join(DB_FILE_NAME)
 }
 
-pub fn error_log_path(foldtime_home: &Path) -> PathBuf {
-    foldtime_home.join(ERROR_LOG_FILE_NAME)
+pub fn error_log_path(ledger_home: &Path) -> PathBuf {
+    ledger_home.join(ERROR_LOG_FILE_NAME)
 }
 
-/// The pure core of `foldtime_home`: both environment lookups are passed in
+/// The pure core of `ledger_home`: both environment lookups are passed in
 /// so this can be unit-tested without mutating process-global env vars.
 fn resolve_home(override_dir: Option<OsString>, os_home_dir: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(dir) = override_dir.filter(|d| !d.is_empty()) {
@@ -52,9 +52,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_is_dot_foldtime_under_home() {
+    fn default_is_dot_ledger_under_home() {
         let home = resolve_home(None, Some(PathBuf::from("/home/someone"))).unwrap();
-        assert_eq!(home, PathBuf::from("/home/someone/.foldtime"));
+        assert_eq!(home, PathBuf::from("/home/someone/.ledger"));
     }
 
     #[test]
@@ -74,7 +74,7 @@ mod tests {
             Some(PathBuf::from("/home/someone")),
         )
         .unwrap();
-        assert_eq!(home, PathBuf::from("/home/someone/.foldtime"));
+        assert_eq!(home, PathBuf::from("/home/someone/.ledger"));
     }
 
     #[test]
@@ -85,20 +85,20 @@ mod tests {
 
     #[test]
     fn db_and_error_log_paths_live_inside_home() {
-        let home = PathBuf::from("/x/.foldtime");
-        assert_eq!(db_path(&home), PathBuf::from("/x/.foldtime/foldtime.db"));
+        let home = PathBuf::from("/x/.ledger");
+        assert_eq!(db_path(&home), PathBuf::from("/x/.ledger/ledger.db"));
         assert_eq!(
             error_log_path(&home),
-            PathBuf::from("/x/.foldtime/error.log")
+            PathBuf::from("/x/.ledger/error.log")
         );
     }
 
     #[test]
     fn create_dir_all_creates_missing_home_and_tolerates_existing() {
         let tmp = tempfile::tempdir().unwrap();
-        let home = tmp.path().join("nested").join(".foldtime");
+        let home = tmp.path().join("nested").join(".ledger");
 
-        // Same call ensure_foldtime_home makes, against a temp path.
+        // Same call ensure_ledger_home makes, against a temp path.
         fs::create_dir_all(&home).unwrap();
         assert!(home.is_dir());
         fs::create_dir_all(&home).unwrap(); // already exists → still Ok

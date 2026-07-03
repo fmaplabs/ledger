@@ -18,7 +18,7 @@ export function SignInScreen() {
 						</div>
 						<div className="space-y-1">
 							<h1 className="font-heading text-xl font-semibold tracking-tight">
-								foldTime
+								ledger
 							</h1>
 							<p className="text-sm text-muted-foreground">
 								Sign in to view your dashboard

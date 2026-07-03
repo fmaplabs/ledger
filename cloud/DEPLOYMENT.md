@@ -2,10 +2,12 @@
 
 The app has **two** deploy targets that must be provisioned together:
 
-| Target | What runs there | Deployed with |
-| --- | --- | --- |
-| **Convex** (prod deployment) | schema, queries/mutations/actions, the WorkOS AuthKit component + webhook receiver | `convex deploy` |
-| **Cloudflare Worker** (`foldtime-web`) | the TanStack Start SSR app + static assets | `wrangler deploy` |
+| Target                               | What runs there
+| Deployed with     |
+| ------------------------------------ |
+---------------------------------------------------------------------------------- | ----------------- |
+| **Convex** (prod deployment)         | schema, queries/mutations/actions, the WorkOS AuthKit component + webhook receiver | `convex deploy`   |
+| **Cloudflare Worker** (`ledger-web`) | the TanStack Start SSR app + static assets                                         | `wrangler deploy` |
 
 The top-level `pnpm deploy` (in this directory) runs both in the correct order.
 
@@ -15,17 +17,22 @@ The top-level `pnpm deploy` (in this directory) runs both in the correct order.
 
 Each value has exactly **one** production home. Do not duplicate secrets across homes.
 
-| Variable | Home in production | Notes |
-| --- | --- | --- |
-| `VITE_CONVEX_URL` | **build-time**, injected by `convex deploy --cmd` | prod Convex URL, baked into the browser bundle. Never hardcode. |
-| `VITE_WORKOS_CLIENT_ID` | **build-time**, `web/.env.production` | public; inlined into the bundle |
-| `VITE_WORKOS_API_HOSTNAME` | **build-time**, `web/.env.production` | your WorkOS Custom Authentication Domain |
-| `WORKOS_CLIENT_ID` | **Worker secret** + **Convex env** | public client id; needed in both runtimes |
-| `WORKOS_API_KEY` | **Worker secret** + **Convex env** | `sk_live_...` |
-| `WORKOS_COOKIE_PASSWORD` | **Worker secret** only | 32+ char random string (`openssl rand -base64 32`) |
-| `WORKOS_REDIRECT_URI` | **Worker secret** only | `https://<prod-domain>/api/auth/callback` |
-| `WORKOS_ENVIRONMENT_ID` | **Convex env** only | required by `convex/convex.config.ts` |
-| `WORKOS_WEBHOOK_SECRET` | **Convex env** only | verifies the WorkOS webhook |
+| Variable                   | Home in production                                | Notes
+|
+| -------------------------- | ------------------------------------------------- |
+--------------------------------------------------------------- |
+| `VITE_CONVEX_URL`          | **build-time**, injected by `convex deploy --cmd` | prod Convex URL, baked into the
+browser bundle. Never hardcode. |
+| `VITE_WORKOS_CLIENT_ID`    | **build-time**, `web/.env.production`             | public; inlined into the bundle
+|
+| `VITE_WORKOS_API_HOSTNAME` | **build-time**, `web/.env.production`             | your WorkOS Custom Authentication
+Domain                        |
+| `WORKOS_CLIENT_ID`         | **Worker secret** + **Convex env**                | public client id; needed in both runtimes                       |
+| `WORKOS_API_KEY`           | **Worker secret** + **Convex env**                | `sk_live_...`                                                   |
+| `WORKOS_COOKIE_PASSWORD`   | **Worker secret** only                            | 32+ char random string (`openssl rand -base64 32`)              |
+| `WORKOS_REDIRECT_URI`      | **Worker secret** only                            | `https://<prod-domain>/api/auth/callback`                       |
+| `WORKOS_ENVIRONMENT_ID`    | **Convex env** only                               | required by `convex/convex.config.ts`                           |
+| `WORKOS_WEBHOOK_SECRET`    | **Convex env** only                               | verifies the WorkOS webhook                                     |
 
 - **Worker secrets** are set with `wrangler secret put <NAME>` (run in `web/`) and reach the
   server code through `process.env` (auto-populated because `nodejs_compat` + compat date
@@ -44,7 +51,7 @@ In the WorkOS dashboard, in your **production** environment:
 
 - Note the **Client ID**, **API Key** (`sk_live_...`), and **Environment ID**.
 - Add the redirect URI `https://<prod-domain>/api/auth/callback`.
-- (Recommended) Configure a **Custom Authentication Domain** (e.g. `auth.foldtime.dev`) and use it
+- (Recommended) Configure a **Custom Authentication Domain** (e.g. `auth.ledger.dev`) and use it
   as `VITE_WORKOS_API_HOSTNAME`.
 - Add a **Webhook** pointing at your prod Convex site domain:
   `https://<prod-convex-name>.convex.site/workos/webhook`, and note its signing secret.

@@ -1,4 +1,4 @@
-//! Black-box test of `foldtime status --json`: real heartbeats recorded by
+//! Black-box test of `ledger status --json`: real heartbeats recorded by
 //! the compiled binary, timestamps spread via SQL, and the JSON contract the
 //! editor plugin depends on asserted field by field.
 
@@ -7,20 +7,20 @@ mod common;
 use std::fs;
 use std::process::Command;
 
-use common::{BIN, foldtime, setup};
+use common::{BIN, ledger, setup};
 
 #[test]
 fn status_reports_identity_and_todays_tracked_time() {
     let env = setup();
 
     for _ in 0..2 {
-        let out = foldtime(&env, &["heartbeat", "--file", "src/main.rs"]);
+        let out = ledger(&env, &["heartbeat", "--file", "src/main.rs"]);
         assert!(out.status.success());
     }
 
     // Spread the two heartbeats 5 minutes apart (still inside the 15-minute
     // idle threshold) so today's tracked time is a deterministic 300000 ms.
-    let conn = rusqlite::Connection::open(env.home.join("foldtime.db")).unwrap();
+    let conn = rusqlite::Connection::open(env.home.join("ledger.db")).unwrap();
     conn.execute(
         "UPDATE heartbeats
          SET ts = (SELECT MAX(ts) FROM heartbeats) - 300000
@@ -33,7 +33,7 @@ fn status_reports_identity_and_todays_tracked_time() {
         .unwrap();
     drop(conn);
 
-    let out = foldtime(&env, &["status", "--json"]);
+    let out = ledger(&env, &["status", "--json"]);
     assert!(
         out.status.success(),
         "status failed: {}",
@@ -53,13 +53,13 @@ fn status_reports_identity_and_todays_tracked_time() {
 fn status_outside_a_repo_exits_zero_with_nulls() {
     let tmp = tempfile::tempdir().unwrap();
     let not_a_repo = tmp.path().join("plain-dir");
-    let home = tmp.path().join("foldtime-home");
+    let home = tmp.path().join("ledger-home");
     fs::create_dir_all(&not_a_repo).unwrap();
 
     let out = Command::new(BIN)
         .args(["status", "--json"])
         .current_dir(&not_a_repo)
-        .env("FOLDTIME_HOME", &home)
+        .env("LEDGER_HOME", &home)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_SYSTEM", "/dev/null")
         .output()

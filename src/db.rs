@@ -433,7 +433,7 @@ mod tests {
     #[test]
     fn migrating_a_v1_database_claims_and_dirties_every_existing_row() {
         let tmp = tempfile::tempdir().unwrap();
-        let path = tmp.path().join("foldtime.db");
+        let path = tmp.path().join("ledger.db");
 
         // Build a pre-stage-12 database: v1 table, rows, user_version 0.
         let conn = Connection::open(&path).unwrap();
@@ -587,7 +587,7 @@ mod tests {
     #[test]
     fn open_db_puts_a_file_backed_db_into_wal_mode() {
         let tmp = tempfile::tempdir().unwrap();
-        let conn = open_db(&tmp.path().join("foldtime.db"), MY_DEVICE).unwrap();
+        let conn = open_db(&tmp.path().join("ledger.db"), MY_DEVICE).unwrap();
 
         let mode: String = conn
             .query_row("PRAGMA journal_mode", [], |row| row.get(0))
@@ -598,7 +598,7 @@ mod tests {
     #[test]
     fn open_db_is_idempotent_and_keeps_existing_rows() {
         let tmp = tempfile::tempdir().unwrap();
-        let path = tmp.path().join("foldtime.db");
+        let path = tmp.path().join("ledger.db");
 
         let conn = open_db(&path, MY_DEVICE).unwrap();
         insert(&conn, 1_000, "foo", "main");

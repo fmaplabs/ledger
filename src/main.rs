@@ -1,16 +1,16 @@
 use clap::Parser;
-use foldtime::cli::{
+use ledger::cli::{
     Cli,
     Commands::{Heartbeat, HookCommit, Init, Login, Logout, Report, Schema, Status, Sync},
 };
-use foldtime::commands;
+use ledger::commands;
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Init { with_config } => commands::init::run(with_config),
         // heartbeat and hook-commit run silently: they always return () and
-        // exit 0 — failures land in ~/.foldtime/error.log instead.
+        // exit 0 — failures land in ~/.ledger/error.log instead.
         Heartbeat { file, write } => {
             commands::heartbeat::run(file, write);
             Ok(())

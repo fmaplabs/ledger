@@ -14,7 +14,7 @@ surface that only prints stubs — no real logic yet.
 
 ## Tasks
 
-- [x] Rename the package in `Cargo.toml` from `foldTime` to `foldtime` (binary
+- [x] Rename the package in `Cargo.toml` from `ledger` to `ledger` (binary
   name should match the package name; mixed-case package names also trigger a
   Cargo lint)
 - [x] Add `src/lib.rs` with `pub mod cli;`

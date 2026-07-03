@@ -20,7 +20,7 @@ pub fn run(
         .map(parse_local_day_start_after)
         .transpose()?;
 
-    let home = paths::ensure_foldtime_home()?;
+    let home = paths::ensure_ledger_home()?;
     let settings = settings::load_or_init(&home)?;
     let conn =
         db::open_db(&paths::db_path(&home), &settings.device_id).context("opening heartbeat db")?;

@@ -103,7 +103,7 @@ pub fn poll_for_tokens(settings: &Settings, auth: &DeviceAuthorization) -> Resul
                     "authorization_pending" => Ok(PollOutcome::Pending),
                     "slow_down" => Ok(PollOutcome::SlowDown),
                     "access_denied" => bail!("login was declined in the browser"),
-                    "expired_token" => bail!("the login code expired — run `foldtime login` again"),
+                    "expired_token" => bail!("the login code expired — run `ledger login` again"),
                     other => bail!(
                         "workos rejected the login: {other}{}",
                         description.map(|d| format!(" ({d})")).unwrap_or_default()
@@ -132,7 +132,7 @@ fn poll_loop(
             PollOutcome::SlowDown => interval += Duration::from_secs(5),
         }
         if deadline_passed() {
-            bail!("the login code expired — run `foldtime login` again");
+            bail!("the login code expired — run `ledger login` again");
         }
         sleep(interval);
     }
@@ -143,7 +143,7 @@ fn poll_loop(
 /// pair is persisted (atomically) before this function returns it.
 pub fn refresh(
     settings: &Settings,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     refresh_token: &str,
     timeouts: Timeouts,
 ) -> Result<Credentials> {
@@ -160,12 +160,12 @@ pub fn refresh(
     )?;
     match outcome {
         AuthenticateOutcome::Tokens(credentials) => {
-            settings::save_credentials(foldtime_home, &credentials)
+            settings::save_credentials(ledger_home, &credentials)
                 .context("persisting rotated tokens")?;
             Ok(credentials)
         }
         AuthenticateOutcome::OauthError { code, .. } if code == "invalid_grant" => {
-            bail!("session expired — run `foldtime login`")
+            bail!("session expired — run `ledger login`")
         }
         AuthenticateOutcome::OauthError { code, description } => bail!(
             "refreshing the session failed: {code}{}",
@@ -179,16 +179,16 @@ pub fn refresh(
 /// refreshed proactively so it doesn't die mid-batch.
 pub fn get_valid_token(
     settings: &Settings,
-    foldtime_home: &Path,
+    ledger_home: &Path,
     timeouts: Timeouts,
 ) -> Result<Option<String>> {
-    let Some(credentials) = settings::load_credentials(foldtime_home)? else {
+    let Some(credentials) = settings::load_credentials(ledger_home)? else {
         return Ok(None);
     };
     if let Some(expires_at) = credentials.expires_at {
         let now_ms = chrono::Utc::now().timestamp_millis();
         if now_ms >= expires_at - 60_000 {
-            let refreshed = refresh(settings, foldtime_home, &credentials.refresh_token, timeouts)?;
+            let refreshed = refresh(settings, ledger_home, &credentials.refresh_token, timeouts)?;
             return Ok(Some(refreshed.access_token));
         }
     }
@@ -520,7 +520,7 @@ mod tests {
             Timeouts::interactive(),
         )
         .unwrap_err();
-        assert!(err.to_string().contains("foldtime login"), "got: {err:#}");
+        assert!(err.to_string().contains("ledger login"), "got: {err:#}");
     }
 
     #[test]

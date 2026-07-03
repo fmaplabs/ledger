@@ -7,7 +7,7 @@ use crate::{db, errors, git, paths, project, settings};
 
 /// Called by the installed post-commit hook: stamp HEAD's sha onto every
 /// still-untagged heartbeat for this project/task. Runs under
-/// `run_silently` so a broken foldtime install can never disturb a commit.
+/// `run_silently` so a broken ledger install can never disturb a commit.
 pub fn run() {
     errors::run_silently(tag_heartbeats_with_head);
 }
@@ -17,7 +17,7 @@ fn tag_heartbeats_with_head() -> Result<()> {
     let identity = project::resolve_identity(&cwd)?;
     let sha = git::head_sha(&cwd)?;
 
-    let home = paths::ensure_foldtime_home()?;
+    let home = paths::ensure_ledger_home()?;
     let settings = settings::load_or_init(&home)?;
     let mut conn =
         db::open_db(&paths::db_path(&home), &settings.device_id).context("opening heartbeat db")?;

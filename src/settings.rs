@@ -10,12 +10,12 @@ use serde::{Deserialize, Serialize};
 pub const CONFIG_FILE_NAME: &str = "config.json";
 pub const CREDENTIALS_FILE_NAME: &str = "credentials.json";
 
-pub const CONVEX_URL_ENV_VAR: &str = "FOLDTIME_CONVEX_URL";
-pub const WORKOS_CLIENT_ID_ENV_VAR: &str = "FOLDTIME_WORKOS_CLIENT_ID";
-pub const WORKOS_API_URL_ENV_VAR: &str = "FOLDTIME_WORKOS_API_URL";
+pub const CONVEX_URL_ENV_VAR: &str = "LEDGER_CONVEX_URL";
+pub const WORKOS_CLIENT_ID_ENV_VAR: &str = "LEDGER_WORKOS_CLIENT_ID";
+pub const WORKOS_API_URL_ENV_VAR: &str = "LEDGER_WORKOS_API_URL";
 
 // Baked-in defaults for the hosted backend: the Convex production
-// deployment (team fmap-labs, project foldtime) and its auto-provisioned
+// deployment (team fmap-labs, project ledger) and its auto-provisioned
 // WorkOS environment's client id (a public identifier, not a secret).
 // Env vars and config.json override them either way — see the stage 12 doc
 // for the resolution rationale.
@@ -23,8 +23,8 @@ const DEFAULT_CONVEX_URL: Option<&str> = Some("https://giant-elk-500.convex.clou
 const DEFAULT_WORKOS_CLIENT_ID: Option<&str> = Some("client_01KWJ14ZBG6MS30EVTRR2AZ7EX");
 const DEFAULT_WORKOS_API_URL: Option<&str> = Some("https://api.workos.com");
 
-/// Machine-scoped settings at `~/.foldtime/config.json`. Unlike the per-repo
-/// `.foldtime.json` this file is created on first use and a malformed file is
+/// Machine-scoped settings at `~/.ledger/config.json`. Unlike the per-repo
+/// `.ledger.json` this file is created on first use and a malformed file is
 /// a hard error, never a silent fallback: regenerating it would mint a new
 /// `device_id`, and device identity is what makes sync conflict-free.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ pub struct Settings {
     /// Stable per-machine UUID; every heartbeat row this machine creates is
     /// owned by (and only pushed by) this id.
     pub device_id: String,
-    /// Human-readable label for this machine, shown by `foldtime sync`.
+    /// Human-readable label for this machine, shown by `ledger sync`.
     pub device_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub convex_url: Option<String>,
@@ -55,19 +55,19 @@ struct SettingsFile {
     workos_api_url: Option<String>,
 }
 
-pub fn config_path(foldtime_home: &Path) -> PathBuf {
-    foldtime_home.join(CONFIG_FILE_NAME)
+pub fn config_path(ledger_home: &Path) -> PathBuf {
+    ledger_home.join(CONFIG_FILE_NAME)
 }
 
-pub fn credentials_path(foldtime_home: &Path) -> PathBuf {
-    foldtime_home.join(CREDENTIALS_FILE_NAME)
+pub fn credentials_path(ledger_home: &Path) -> PathBuf {
+    ledger_home.join(CREDENTIALS_FILE_NAME)
 }
 
-/// Load `~/.foldtime/config.json`, creating it (with a fresh device id and
+/// Load `~/.ledger/config.json`, creating it (with a fresh device id and
 /// this machine's hostname) on first use. The generated identity is written
 /// back immediately so every later invocation sees the same `device_id`.
-pub fn load_or_init(foldtime_home: &Path) -> Result<Settings> {
-    let path = config_path(foldtime_home);
+pub fn load_or_init(ledger_home: &Path) -> Result<Settings> {
+    let path = config_path(ledger_home);
     let file = match fs::read_to_string(&path) {
         Ok(contents) => serde_json::from_str::<SettingsFile>(&contents).with_context(|| {
             format!(
@@ -146,7 +146,7 @@ fn resolve_setting(
 }
 
 fn missing_setting(what: &str, env_var: &str, config_key: &str) -> String {
-    format!("no {what} configured — set {env_var} or \"{config_key}\" in ~/.foldtime/config.json")
+    format!("no {what} configured — set {env_var} or \"{config_key}\" in ~/.ledger/config.json")
 }
 
 fn hostname() -> String {
@@ -174,24 +174,24 @@ pub struct Credentials {
     pub expires_at: Option<i64>,
 }
 
-pub fn load_credentials(foldtime_home: &Path) -> Result<Option<Credentials>> {
-    let path = credentials_path(foldtime_home);
+pub fn load_credentials(ledger_home: &Path) -> Result<Option<Credentials>> {
+    let path = credentials_path(ledger_home);
     match fs::read_to_string(&path) {
         Ok(contents) => serde_json::from_str(&contents)
             .map(Some)
-            .with_context(|| format!("malformed {} — run `foldtime login` again", path.display())),
+            .with_context(|| format!("malformed {} — run `ledger login` again", path.display())),
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(e).with_context(|| format!("reading {}", path.display())),
     }
 }
 
-pub fn save_credentials(foldtime_home: &Path, credentials: &Credentials) -> Result<()> {
+pub fn save_credentials(ledger_home: &Path, credentials: &Credentials) -> Result<()> {
     let json = serde_json::to_vec_pretty(credentials).expect("credentials always serialize");
-    write_private_atomic(&credentials_path(foldtime_home), &json)
+    write_private_atomic(&credentials_path(ledger_home), &json)
 }
 
-pub fn delete_credentials(foldtime_home: &Path) -> Result<()> {
-    match fs::remove_file(credentials_path(foldtime_home)) {
+pub fn delete_credentials(ledger_home: &Path) -> Result<()> {
+    match fs::remove_file(credentials_path(ledger_home)) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()), // already logged out
         Err(e) => Err(e).context("deleting credentials"),
@@ -303,7 +303,7 @@ mod tests {
             Some("from-default")
         );
         assert_eq!(resolve_setting(None, None, None), None);
-        // Empty env var counts as unset, like FOLDTIME_HOME does.
+        // Empty env var counts as unset, like LEDGER_HOME does.
         assert_eq!(
             resolve_setting(Some(String::new()), config, default).as_deref(),
             Some("from-config")

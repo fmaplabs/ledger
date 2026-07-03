@@ -25,7 +25,7 @@ function Dashboard() {
 		<div className="min-h-svh">
 			<header className="flex items-center justify-between border-b px-6 py-4">
 				<span className="font-heading text-lg font-semibold tracking-tight">
-					foldTime
+					ledger
 				</span>
 				<div className="flex items-center gap-3">
 					<span className="text-sm text-muted-foreground">{user?.email}</span>

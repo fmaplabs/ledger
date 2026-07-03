@@ -6,23 +6,23 @@ about proving the whole thing actually works together.
 ## Tasks
 
 - [x] Manual smoke test in a real (non-scratch) repo:
-  - `foldtime init --with-config` → confirm `.git/hooks/post-commit`,
-    `.foldtime.json`, `.foldtime.schema.json` all exist
-  - a few `foldtime heartbeat` calls, then a `git commit`
-  - `foldtime report` shows hours, with the commit hash attached to the right
+  - `ledger init --with-config` → confirm `.git/hooks/post-commit`,
+    `.ledger.json`, `.ledger.schema.json` all exist
+  - a few `ledger heartbeat` calls, then a `git commit`
+  - `ledger report` shows hours, with the commit hash attached to the right
     session
-  - re-run `foldtime init` and confirm it detects the existing hook instead
+  - re-run `ledger init` and confirm it detects the existing hook instead
     of clobbering it
-- [x] Confirm `foldtime schema`'s output actually validates a scaffolded
-  `.foldtime.json` — opening the file in an editor that understands
+- [x] Confirm `ledger schema`'s output actually validates a scaffolded
+  `.ledger.json` — opening the file in an editor that understands
   `$schema` (VS Code does this natively) is the easiest check
 - [x] Confirm the "never fail loudly" property directly:
-  - `foldtime heartbeat` outside any git repo → exits 0, no crash, no row
+  - `ledger heartbeat` outside any git repo → exits 0, no crash, no row
     inserted
-  - `foldtime heartbeat` inside a repo with a deliberately malformed
-    `.foldtime.json` → exits 0, no crash, a warning appended to the error log
+  - `ledger heartbeat` inside a repo with a deliberately malformed
+    `.ledger.json` → exits 0, no crash, a warning appended to the error log
 - [x] Write a short README: install (`cargo install --path .`, or build +
-  copy the binary onto `PATH`), `foldtime init` usage, `foldtime
+  copy the binary onto `PATH`), `ledger init` usage, `ledger
   heartbeat`/`report` usage
 
 ## Resources

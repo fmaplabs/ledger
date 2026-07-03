@@ -16,7 +16,7 @@ fn record_heartbeat(file: Option<&str>, is_write: bool) -> Result<()> {
     let cwd = env::current_dir().context("resolving current directory")?;
     let identity = project::resolve_identity(&cwd)?;
 
-    let home = paths::ensure_foldtime_home()?;
+    let home = paths::ensure_ledger_home()?;
     let settings = settings::load_or_init(&home)?;
     let conn =
         db::open_db(&paths::db_path(&home), &settings.device_id).context("opening heartbeat db")?;

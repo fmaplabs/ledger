@@ -8,17 +8,17 @@ use anyhow::{Context, Result};
 
 use crate::{config, git};
 
-const HOOK_INVOCATION: &str = "foldtime hook-commit";
-const HOOK_SCRIPT: &str = "#!/bin/sh\n# Installed by `foldtime init`.\nfoldtime hook-commit\n";
-const SCHEMA_FILE_NAME: &str = ".foldtime.schema.json";
+const HOOK_INVOCATION: &str = "ledger hook-commit";
+const HOOK_SCRIPT: &str = "#!/bin/sh\n# Installed by `ledger init`.\nledger hook-commit\n";
+const SCHEMA_FILE_NAME: &str = ".ledger.schema.json";
 
 /// Install the post-commit hook (and, with `--with-config`, scaffold
-/// `.foldtime.json` + its schema). Unlike heartbeat/hook-commit this is an
+/// `.ledger.json` + its schema). Unlike heartbeat/hook-commit this is an
 /// interactive command — failures should be loud, so it returns `Result`.
 pub fn run(with_config: bool) -> Result<()> {
     let cwd = env::current_dir().context("resolving current directory")?;
     let repo_root =
-        git::repo_root(&cwd).context("`foldtime init` must be run inside a git repository")?;
+        git::repo_root(&cwd).context("`ledger init` must be run inside a git repository")?;
 
     install_hook(&cwd)?;
     if with_config {
@@ -38,7 +38,7 @@ fn install_hook(cwd: &Path) -> Result<()> {
             .with_context(|| format!("reading existing hook {}", hook_path.display()))?;
         if contents.contains(HOOK_INVOCATION) {
             println!(
-                "post-commit hook already calls foldtime — leaving {} untouched",
+                "post-commit hook already calls ledger — leaving {} untouched",
                 hook_path.display()
             );
             return Ok(());
@@ -51,11 +51,11 @@ fn install_hook(cwd: &Path) -> Result<()> {
         let separator = if contents.ends_with('\n') { "" } else { "\n" };
         write!(
             file,
-            "{separator}\n# Added by `foldtime init`.\n{HOOK_INVOCATION}\n"
+            "{separator}\n# Added by `ledger init`.\n{HOOK_INVOCATION}\n"
         )
         .context("appending to existing post-commit hook")?;
         println!(
-            "appended foldtime to existing post-commit hook at {}",
+            "appended ledger to existing post-commit hook at {}",
             hook_path.display()
         );
     } else {

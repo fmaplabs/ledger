@@ -1,17 +1,17 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "foldtime-web",
+	"name": "ledger-web",
 	"compatibility_date": "2025-09-02",
 	// nodejs_compat also auto-populates process.env from the Worker's vars and
 	// secrets (default for compat dates >= 2025-04-01), which is how the WorkOS
 	// AuthKit server middleware reads WORKOS_* at runtime.
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "@tanstack/react-start/server-entry",
-
 	// Emit Workers Logs so production requests are debuggable. Best practice:
 	// enable observability before the first production deploy.
-	"observability": { "enabled": true },
-
+	"observability": {
+		"enabled": true
+	}
 	// No environment-specific config lives here on purpose:
 	//
 	// - Client (VITE_*) config is inlined into the browser bundle at BUILD time
@@ -28,10 +28,8 @@
 	//
 	//   For local `wrangler dev` use .dev.vars (see .dev.vars.example);
 	//   `vite dev` reads .env.local. See ../DEPLOYMENT.md for the full runbook.
-
 	// To serve on a custom domain instead of *.workers.dev, add a route, e.g.:
-	// "routes": [{ "pattern": "app.foldtime.dev", "custom_domain": true }]
-
+	// "routes": [{ "pattern": "app.ledger.dev", "custom_domain": true }]
 	// SSR makes several Convex calls per request; Smart Placement can co-locate
 	// the Worker with the backend to cut that latency. Enable if it measures well:
 	// "placement": { "mode": "smart" }

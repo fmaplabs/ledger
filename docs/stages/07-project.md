@@ -24,7 +24,7 @@ calls: "what project/task am I in, right now?"
   itself should just propagate the `Err`; the *silent no-op* behavior for
   `heartbeat` is a `commands/heartbeat.rs` + `errors.rs` concern (Stages 8–9),
   not this file's job
-- [x] Unit tests: with a `.foldtime.json` override present (project name
+- [x] Unit tests: with a `.ledger.json` override present (project name
   differs from dirname); without one (falls back to dirname); a non-repo
   `cwd` returns an `Err`
 

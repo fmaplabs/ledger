@@ -1,9 +1,9 @@
---- Spawning the foldtime binary. Everything here is fire-and-forget or
+--- Spawning the ledger binary. Everything here is fire-and-forget or
 --- callback-based; nothing blocks the editor.
 
 local M = {}
 
-local cmd = "foldtime"
+local cmd = "ledger"
 
 --- Memoized spawn failure (binary missing mid-session, etc.): surfaced once
 --- via vim.notify, kept around for :checkhealth.
@@ -31,7 +31,7 @@ local function spawn(args, opts, on_exit)
 	if not ok and not M.spawn_error then
 		M.spawn_error = tostring(err)
 		vim.schedule(function()
-			vim.notify("foldtime.nvim: could not run " .. cmd .. ": " .. M.spawn_error, vim.log.levels.WARN)
+			vim.notify("ledger.nvim: could not run " .. cmd .. ": " .. M.spawn_error, vim.log.levels.WARN)
 		end)
 	end
 	return ok
@@ -67,7 +67,7 @@ function M.status(dir, cb)
 	end
 end
 
---- Human one-liner from `status` (no --json), for :FoldTime status.
+--- Human one-liner from `status` (no --json), for :Ledger status.
 function M.status_line(dir, cb)
 	local spawned = spawn({ "status" }, { cwd = dir, text = true }, function(out)
 		vim.schedule(function()

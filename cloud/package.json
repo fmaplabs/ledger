@@ -1,5 +1,5 @@
 {
-    "name": "foldtime-cloud",
+    "name": "ledger-cloud",
     "private": true,
     "type": "module",
     "scripts": {
@@ -9,6 +9,7 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@convex-dev/stripe": "^0.1.4",
         "@convex-dev/workos-authkit": "^0.2.7",
         "convex": "^1.31.0"
     },

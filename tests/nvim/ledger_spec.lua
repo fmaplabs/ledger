@@ -4,7 +4,7 @@
 
 vim.notify = function() end -- keep enable/disable chatter out of the output
 
-local log_path = vim.env.FOLDTIME_SHIM_LOG
+local log_path = vim.env.LEDGER_SHIM_LOG
 
 --- Heartbeat calls logged by the shim (status --json fetches from the
 --- statusline cache also hit the shim, but aren't what these cases count).
@@ -56,7 +56,7 @@ local file1 = workspace_file("one.txt")
 local file2 = workspace_file("two.txt")
 local file3 = workspace_file("three.txt")
 
-require("foldtime").setup({})
+require("ledger").setup({})
 
 check("editing a file sends one heartbeat from the file's directory", function()
 	vim.cmd.edit(file1)
@@ -95,14 +95,14 @@ check("special buffers (buftype=nofile) send nothing", function()
 	assert(#shim_lines() == before, "scratch buffer produced a heartbeat")
 end)
 
-check(":FoldTime disable stops sends, enable resumes them", function()
-	vim.cmd("FoldTime disable")
+check(":Ledger disable stops sends, enable resumes them", function()
+	vim.cmd("Ledger disable")
 	vim.cmd.edit(file3) -- fresh file: only the disabled flag can stop it
 	vim.wait(300)
 	local before = #shim_lines()
 	assert(before == 3, "disable did not stop heartbeats: " .. before .. " calls")
 
-	vim.cmd("FoldTime enable")
+	vim.cmd("Ledger enable")
 	vim.api.nvim_exec_autocmds("CursorMoved", { buffer = 0 })
 	local lines = settled_lines(before + 1)
 	assert(#lines == before + 1, "enable did not resume heartbeats")
@@ -122,8 +122,8 @@ check("files outside a git repo send nothing", function()
 end)
 
 check("status cache feeds the lualine component", function()
-	local status = require("foldtime.status")
-	local lualine = require("foldtime.lualine")
+	local status = require("ledger.status")
+	local lualine = require("ledger.lualine")
 	status.refresh()
 	vim.wait(2000, function()
 		return status.get() ~= nil

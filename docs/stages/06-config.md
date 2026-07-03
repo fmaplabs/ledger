@@ -1,4 +1,4 @@
-# Stage 6: `config.rs` — `.foldtime.json`
+# Stage 6: `config.rs` — `.ledger.json`
 
 Optional per-repo config, loaded tolerantly (never a hard failure) and
 schema-generated so the schema can't drift from the parser.

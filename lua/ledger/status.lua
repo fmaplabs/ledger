@@ -1,8 +1,8 @@
---- Cached view of `foldtime status --json` for the statusline. get() is a
+--- Cached view of `ledger status --json` for the statusline. get() is a
 --- plain table read — a repeating timer plus a few event-driven pokes keep
 --- the cache fresh, so a render never shells out.
 
-local cli = require("foldtime.cli")
+local cli = require("ledger.cli")
 
 local M = {}
 

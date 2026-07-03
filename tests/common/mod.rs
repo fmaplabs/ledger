@@ -1,5 +1,5 @@
 //! Shared harness for black-box integration tests: a real temp repo and a
-//! temp FOLDTIME_HOME, with every spawned process (git or foldtime) getting
+//! temp LEDGER_HOME, with every spawned process (git or ledger) getting
 //! the same hermetic environment.
 
 #![allow(dead_code)] // each test binary uses a different subset
@@ -10,7 +10,7 @@ use std::process::{Command, Output};
 
 /// Cargo sets CARGO_BIN_EXE_<name> for integration tests — the path to the
 /// compiled binary under test.
-pub const BIN: &str = env!("CARGO_BIN_EXE_foldtime");
+pub const BIN: &str = env!("CARGO_BIN_EXE_ledger");
 
 pub struct TestEnv {
     _tmp: tempfile::TempDir, // held for its Drop; deletes everything below
@@ -21,7 +21,7 @@ pub struct TestEnv {
 pub fn setup() -> TestEnv {
     let tmp = tempfile::tempdir().unwrap();
     let repo = tmp.path().join("repo");
-    let home = tmp.path().join("foldtime-home");
+    let home = tmp.path().join("ledger-home");
     fs::create_dir_all(&repo).unwrap();
     let env = TestEnv {
         _tmp: tmp,
@@ -32,9 +32,9 @@ pub fn setup() -> TestEnv {
     env
 }
 
-/// Every process in the test — git or foldtime (whose hook runs git, and
+/// Every process in the test — git or ledger (whose hook runs git, and
 /// which itself shells out to git) — gets the same hermetic environment:
-/// the temp FOLDTIME_HOME, no user/system git config, a pinned identity,
+/// the temp LEDGER_HOME, no user/system git config, a pinned identity,
 /// and the compiled binary's directory on PATH so the hook can find it.
 pub fn command(env: &TestEnv, program: &str, args: &[&str]) -> Command {
     let bin_dir = Path::new(BIN).parent().unwrap();
@@ -46,7 +46,7 @@ pub fn command(env: &TestEnv, program: &str, args: &[&str]) -> Command {
     let mut cmd = Command::new(program);
     cmd.args(args)
         .current_dir(&env.repo)
-        .env("FOLDTIME_HOME", &env.home)
+        .env("LEDGER_HOME", &env.home)
         .env("PATH", path_var)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_SYSTEM", "/dev/null")
@@ -68,6 +68,6 @@ pub fn git(env: &TestEnv, args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).trim_end().to_string()
 }
 
-pub fn foldtime(env: &TestEnv, args: &[&str]) -> Output {
+pub fn ledger(env: &TestEnv, args: &[&str]) -> Output {
     command(env, BIN, args).output().unwrap()
 }

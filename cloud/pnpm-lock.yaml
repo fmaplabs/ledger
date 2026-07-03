@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@convex-dev/stripe':
+        specifier: ^0.1.4
+        version: 0.1.4(@types/node@22.20.0)(convex@1.42.1(react@19.2.7))(react@19.2.7)
       '@convex-dev/workos-authkit':
         specifier: ^0.2.7
         version: 0.2.7(@standard-schema/spec@1.1.0)(@workos-inc/authkit-react@0.16.1(react@19.2.7))(@workos-inc/node@10.7.0)(convex@1.42.1(react@19.2.7))(hono@4.12.27)(react@19.2.7)(typescript@5.9.3)(zod@4.4.3)
@@ -445,6 +448,12 @@ packages:
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       convex: ^1.29.3
+
+  '@convex-dev/stripe@0.1.4':
+    resolution: {integrity: sha512-HnINm3K2QHGvP0X4YV7KruCjQ1Ni0HE1qpJ5rZYjfdUbMcqJsX4ZYTmOo7tL83qtokS3EahKVkhXLCH/9Ms/og==}
+    peerDependencies:
+      convex: ^1.29.3
+      react: ^18.3.1 || ^19.0.0
 
   '@convex-dev/workflow@0.4.4':
     resolution: {integrity: sha512-ZQfVspAAxG4zZJEep2qaRtupw8OewwMezq6KNKaXKjo/gA+YffS9bXz13x+L/TSt9/Lb6gioae6Y9PDrqh7xQg==}
@@ -4280,6 +4289,15 @@ packages:
   strip-literal@3.1.0:
     resolution: {integrity: sha512-8r3mkIM/2+PpjHoOtiAW8Rg3jJLHaV7xPwG+YRGrv6FP0wwk/toTpATxWYOW0BKdWwl82VT2tFYi5DlROa0Mxg==}
 
+  stripe@20.4.1:
+    resolution: {integrity: sha512-axCguHItc8Sxt0HC6aSkdVRPffjYPV7EQqZRb2GkIa8FzWDycE7nHJM19C6xAIynH1Qp1/BHiopSi96jGBxT0w==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': '>=16'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -5091,6 +5109,14 @@ snapshots:
     dependencies:
       '@tanstack/react-query': 5.101.2(react@19.2.7)
       convex: 1.42.1(react@19.2.7)
+
+  '@convex-dev/stripe@0.1.4(@types/node@22.20.0)(convex@1.42.1(react@19.2.7))(react@19.2.7)':
+    dependencies:
+      convex: 1.42.1(react@19.2.7)
+      react: 19.2.7
+      stripe: 20.4.1(@types/node@22.20.0)
+    transitivePeerDependencies:
+      - '@types/node'
 
   '@convex-dev/workflow@0.4.4(@convex-dev/workpool@0.4.7(convex-helpers@0.1.120(@standard-schema/spec@1.1.0)(convex@1.42.1(react@19.2.7))(hono@4.12.27)(react@19.2.7)(typescript@5.9.3)(zod@4.4.3))(convex@1.42.1(react@19.2.7)))(convex-helpers@0.1.120(@standard-schema/spec@1.1.0)(convex@1.42.1(react@19.2.7))(hono@4.12.27)(react@19.2.7)(typescript@5.9.3)(zod@4.4.3))(convex@1.42.1(react@19.2.7))':
     dependencies:
@@ -8773,6 +8799,10 @@ snapshots:
   strip-literal@3.1.0:
     dependencies:
       js-tokens: 9.0.1
+
+  stripe@20.4.1(@types/node@22.20.0):
+    optionalDependencies:
+      '@types/node': 22.20.0
 
   supports-color@10.2.2: {}
 

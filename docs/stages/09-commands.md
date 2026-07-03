@@ -18,13 +18,13 @@ order — `heartbeat` → `hook-commit` → `init` → `schema` → `report` —
   `db::tag_untagged_heartbeats`, wrapped in `run_silently`
 - [x] `commands/init.rs`:
   - read `.git/hooks/post-commit` if it exists; if it already invokes
-    `foldtime hook-commit`, no-op; if it exists but doesn't, append rather
+    `ledger hook-commit`, no-op; if it exists but doesn't, append rather
     than overwrite (or warn and refuse — decide which)
-  - if it doesn't exist, write a small shell script that calls `foldtime
+  - if it doesn't exist, write a small shell script that calls `ledger
     hook-commit`, then mark it executable
     (`std::os::unix::fs::PermissionsExt::set_permissions`)
-  - `--with-config`: scaffold `.foldtime.json` and `.foldtime.schema.json` at
-    the repo root, with `.foldtime.json`'s `$schema` field pointing at the
+  - `--with-config`: scaffold `.ledger.json` and `.ledger.schema.json` at
+    the repo root, with `.ledger.json`'s `$schema` field pointing at the
     sibling schema file by relative path
 - [x] `commands/schema.rs`: `schemars::schema_for!(ProjectConfig)`, pretty-print
   as JSON to stdout

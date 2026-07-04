@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as clients from "../clients.js";
+import type * as customerSync from "../customerSync.js";
 import type * as http from "../http.js";
 import type * as invoices from "../invoices.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -30,6 +31,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   clients: typeof clients;
+  customerSync: typeof customerSync;
   http: typeof http;
   invoices: typeof invoices;
   "lib/auth": typeof lib_auth;

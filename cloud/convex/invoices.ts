@@ -13,6 +13,7 @@ import { loadEffectiveSettings } from "./settings";
 import { resolveRateCents } from "./lib/rates";
 import { billableMs, type DeviceHeartbeat } from "./lib/sessions";
 import { getStripe } from "./stripe";
+import { ensureStripeCustomer } from "./customerSync";
 
 const MS_PER_HOUR = 3_600_000;
 // Single-query preview is bounded; the authoritative `generate` path paginates.
@@ -101,20 +102,21 @@ type GenerateResult = {
 type ClaimResult =
 	| { empty: true }
 	| {
-			empty: false;
-			invoiceId: Id<"invoices">;
-			projectName: string;
-			projectDisplay: string;
-			fromCursor: number;
-			toCursor: number;
-			rateCents: number;
-			currency: string;
-			idleThresholdMs: number;
-			clientId: Id<"clients">;
-			clientEmail: string;
-			clientName: string;
-			stripeCustomerId?: string;
-	  };
+		empty: false;
+		invoiceId: Id<"invoices">;
+		userId: string;
+		projectName: string;
+		projectDisplay: string;
+		fromCursor: number;
+		toCursor: number;
+		rateCents: number;
+		currency: string;
+		idleThresholdMs: number;
+		clientId: Id<"clients">;
+		clientEmail: string;
+		clientName: string;
+		stripeCustomerId?: string;
+	};
 
 // Atomically claim everything unbilled for a project by advancing the project's
 // `lastBilledSyncedAt` watermark (a single-document write — race-safe via OCC).
@@ -128,6 +130,7 @@ export const claimUnbilled = internalMutation({
 		v.object({
 			empty: v.literal(false),
 			invoiceId: v.id("invoices"),
+			userId: v.string(),
 			projectName: v.string(),
 			projectDisplay: v.string(),
 			fromCursor: v.number(),
@@ -194,6 +197,7 @@ export const claimUnbilled = internalMutation({
 		return {
 			empty: false,
 			invoiceId,
+			userId,
 			projectName: project.name,
 			projectDisplay: project.displayName ?? project.name,
 			fromCursor,
@@ -262,8 +266,11 @@ export const attachCustomer = internalMutation({
 	args: { clientId: v.id("clients"), stripeCustomerId: v.string() },
 	returns: v.null(),
 	handler: async (ctx, args) => {
+		// `stripeSyncedAt` records the last successful push, so the write-back
+		// that first links the customer also stamps it.
 		await ctx.db.patch(args.clientId, {
 			stripeCustomerId: args.stripeCustomerId,
+			stripeSyncedAt: Date.now(),
 		});
 		return null;
 	},
@@ -354,7 +361,7 @@ export const generate = action({
 		// Paginate the claimed window, accumulating heartbeats to sessionize.
 		const rows: DeviceHeartbeat[] = [];
 		let cursor: string | null = null;
-		for (;;) {
+		for (; ;) {
 			const res: {
 				page: DeviceHeartbeat[];
 				isDone: boolean;
@@ -391,22 +398,15 @@ export const generate = action({
 			const stripe = getStripe();
 			const ledgerInvoiceId = claim.invoiceId;
 
-			let customerId = claim.stripeCustomerId;
-			if (!customerId) {
-				const customer = await stripe.customers.create(
-					{
-						email: claim.clientEmail,
-						name: claim.clientName,
-						metadata: { ledgerClientId: claim.clientId },
-					},
-					{ idempotencyKey: `client:${claim.clientId}` },
-				);
-				customerId = customer.id;
-				await ctx.runMutation(internal.invoices.attachCustomer, {
-					clientId: claim.clientId,
-					stripeCustomerId: customerId,
-				});
-			}
+			// Same byte-stable create/update path the proactive push uses, so a
+			// client first seen at invoice time and one already synced converge.
+			const customerId = await ensureStripeCustomer(stripe, ctx, {
+				clientId: claim.clientId,
+				userId: claim.userId,
+				name: claim.clientName,
+				email: claim.clientEmail,
+				existingStripeCustomerId: claim.stripeCustomerId,
+			});
 
 			const description = `${claim.projectDisplay} — ${hours.toFixed(2)} hours`;
 
@@ -420,7 +420,11 @@ export const generate = action({
 					pending_invoice_items_behavior: "exclude",
 					currency: claim.currency,
 					description,
-					metadata: { ledgerInvoiceId },
+					metadata: {
+						ledgerInvoiceId,
+						ledgerClientId: claim.clientId,
+						ledgerProjectId: args.projectId,
+					},
 				},
 				{ idempotencyKey: `invoice:${ledgerInvoiceId}` },
 			);
@@ -539,15 +543,32 @@ const invoiceView = v.object({
 });
 
 export const list = query({
-	args: {},
+	// Optional filters power reverse-nav (Client→invoices, Project→invoices).
+	// `clientId` takes precedence over `projectId`; neither → all of the user's.
+	args: {
+		clientId: v.optional(v.id("clients")),
+		projectId: v.optional(v.id("projects")),
+	},
 	returns: v.array(invoiceView),
-	handler: async (ctx) => {
+	handler: async (ctx, args) => {
 		const userId = await requireUserId(ctx);
-		const invoices = await ctx.db
-			.query("invoices")
-			.withIndex("by_user", (q) => q.eq("userId", userId))
-			.order("desc")
-			.take(500);
+		const { clientId, projectId } = args;
+		const filtered = clientId
+			? ctx.db
+					.query("invoices")
+					.withIndex("by_user_client", (q) =>
+						q.eq("userId", userId).eq("clientId", clientId),
+					)
+			: projectId
+				? ctx.db
+						.query("invoices")
+						.withIndex("by_user_project", (q) =>
+							q.eq("userId", userId).eq("projectId", projectId),
+						)
+				: ctx.db
+						.query("invoices")
+						.withIndex("by_user", (q) => q.eq("userId", userId));
+		const invoices = await filtered.order("desc").take(500);
 
 		const clientMap = new Map<Id<"clients">, string>();
 		const projectMap = new Map<Id<"projects">, string>();

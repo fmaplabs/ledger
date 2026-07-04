@@ -33,18 +33,23 @@ export default defineSchema({
 	}).index("by_user_device", ["userId", "deviceId"]),
 
 	// A billable customer. `rateCents` overrides the global default; a project's
-	// own rate overrides this. `stripeCustomerId` is filled lazily on first
-	// invoice.
+	// own rate overrides this. `stripeCustomerId` is filled on first invoice or
+	// by the proactive customer push; `stripeSyncedAt` records the last push.
 	clients: defineTable({
 		userId: v.string(),
 		name: v.string(),
 		email: v.string(),
 		rateCents: v.optional(v.number()),
 		stripeCustomerId: v.optional(v.string()),
+		stripeSyncedAt: v.optional(v.number()),
 		archived: v.optional(v.boolean()),
 	})
 		.index("by_user", ["userId"])
-		.index("by_user_name", ["userId", "name"]),
+		.index("by_user_name", ["userId", "name"])
+		// Global (no userId): the Stripe `customer.*` webhook has no user context
+		// and Stripe ids are globally unique. Only internal webhook code reads it.
+		// Mirrors `invoices.by_stripe_invoice`; tolerates the pre-push `undefined`.
+		.index("by_stripe_customer", ["stripeCustomerId"]),
 
 	// A project entity keyed by `name` == heartbeats.project (auto-registered on
 	// sync). `lastBilledSyncedAt` is the billing watermark: heartbeats with a
@@ -104,6 +109,8 @@ export default defineSchema({
 		.index("by_user", ["userId"])
 		.index("by_user_status", ["userId", "status"])
 		.index("by_user_project", ["userId", "projectId"])
+		// Client → invoices reverse lookup (Project → invoices uses by_user_project).
+		.index("by_user_client", ["userId", "clientId"])
 		// Global (no userId): the Stripe webhook has no user context and Stripe
 		// ids are globally unique. Tolerates the pre-finalize `undefined`.
 		.index("by_stripe_invoice", ["stripeInvoiceId"]),

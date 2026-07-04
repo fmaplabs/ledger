@@ -32,6 +32,24 @@ async function reconcileInvoice(
 	});
 }
 
+// Reflect a Stripe `customer.*` edit/delete back into our `clients` table. The
+// component syncs its own tables first, then calls this. `syncFromStripe` only
+// touches clients we already know and NEVER schedules an outbound push, so this
+// handler is the echo loop's dead end (see customerSync.ts).
+async function reconcileCustomer(
+	ctx: GenericActionCtx<GenericDataModel>,
+	event: Stripe.Event,
+) {
+	const customer = event.data.object as Stripe.Customer;
+	await ctx.runMutation(internal.customerSync.syncFromStripe, {
+		ledgerClientId: customer.metadata?.ledgerClientId ?? undefined,
+		stripeCustomerId: customer.id,
+		name: customer.name ?? undefined,
+		email: customer.email ?? undefined,
+		deleted: event.type === "customer.deleted",
+	});
+}
+
 // Single shared webhook endpoint (/stripe/webhook) and one STRIPE_WEBHOOK_SECRET.
 registerRoutes(http, components.stripe, {
 	events: {
@@ -39,6 +57,9 @@ registerRoutes(http, components.stripe, {
 		"invoice.paid": reconcileInvoice,
 		"invoice.payment_failed": reconcileInvoice,
 		"invoice.voided": reconcileInvoice,
+		"customer.created": reconcileCustomer,
+		"customer.updated": reconcileCustomer,
+		"customer.deleted": reconcileCustomer,
 	},
 });
 

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, X } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -14,11 +14,21 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { api } from "@/convex-api";
+import { api, type Id } from "@/convex-api";
 import { formatCents } from "@/lib/money";
+
+// Optional reverse-nav filters, arriving as `?clientId=` / `?projectId=` from
+// the Clients and Projects pages. Kept as loose strings here; the Convex `list`
+// query validates them as real ids (a bad id simply matches nothing).
+type InvoiceSearch = { clientId?: string; projectId?: string };
 
 export const Route = createFileRoute("/_app/invoices")({
 	component: InvoicesPage,
+	validateSearch: (search: Record<string, unknown>): InvoiceSearch => ({
+		clientId: typeof search.clientId === "string" ? search.clientId : undefined,
+		projectId:
+			typeof search.projectId === "string" ? search.projectId : undefined,
+	}),
 });
 
 const STATUS: Record<
@@ -39,7 +49,18 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
 });
 
 function InvoicesPage() {
-	const invoices = useQuery(api.invoices.list, {});
+	const { clientId, projectId } = Route.useSearch();
+	const invoices = useQuery(api.invoices.list, {
+		clientId: clientId as Id<"clients"> | undefined,
+		projectId: projectId as Id<"projects"> | undefined,
+	});
+
+	const isFiltered = clientId !== undefined || projectId !== undefined;
+	// All rows in a filtered list share one client/project, so the first row
+	// names the filter; fall back generically when the list is still empty.
+	const filterName = clientId
+		? (invoices?.[0]?.clientName ?? "this client")
+		: (invoices?.[0]?.projectName ?? "this project");
 
 	return (
 		<div>
@@ -47,6 +68,17 @@ function InvoicesPage() {
 				title="Invoices"
 				description="Generated with Stripe. Open the PDF or send clients to the hosted payment page."
 			/>
+
+			{isFiltered ? (
+				<div className="mb-4 flex items-center gap-2">
+					<Badge variant="neutral">Invoices for {filterName}</Badge>
+					<Button asChild variant="ghost" size="sm">
+						<Link to="/invoices" search={{}}>
+							<X /> Clear filter
+						</Link>
+					</Button>
+				</div>
+			) : null}
 
 			<Card className="p-0">
 				<Table>

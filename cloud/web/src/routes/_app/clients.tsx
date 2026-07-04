@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { Pencil, Plus } from "lucide-react";
+import { Check, ExternalLink, Pencil, Plus, Receipt } from "lucide-react";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -33,6 +34,8 @@ type ClientRow = {
 	name: string;
 	email: string;
 	rateCents?: number;
+	stripeSynced: boolean;
+	stripeCustomerId?: string;
 };
 
 function ClientsPage() {
@@ -59,19 +62,20 @@ function ClientsPage() {
 							<TableHead>Name</TableHead>
 							<TableHead>Email</TableHead>
 							<TableHead>Rate</TableHead>
+							<TableHead>Stripe</TableHead>
 							<TableHead className="w-0" />
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{clients === undefined ? (
 							<TableRow>
-								<TableCell colSpan={4} className="text-muted-foreground">
+								<TableCell colSpan={5} className="text-muted-foreground">
 									Loading…
 								</TableCell>
 							</TableRow>
 						) : clients.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={4} className="text-muted-foreground">
+								<TableCell colSpan={5} className="text-muted-foreground">
 									No clients yet. Add one to start assigning projects.
 								</TableCell>
 							</TableRow>
@@ -90,7 +94,31 @@ function ClientsPage() {
 										)}
 									</TableCell>
 									<TableCell>
+										{c.stripeSynced && c.stripeCustomerId ? (
+											// Synced → link the badge to the Stripe dashboard. The
+											// mode-agnostic URL resolves to the customer's own
+											// (test/live) mode.
+											<a
+												href={`https://dashboard.stripe.com/customers/${c.stripeCustomerId}`}
+												target="_blank"
+												rel="noreferrer"
+												aria-label={`Open ${c.name} in Stripe`}
+											>
+												<Badge variant="success">
+													<Check /> Synced <ExternalLink />
+												</Badge>
+											</a>
+										) : (
+											<Badge variant="neutral">Pending</Badge>
+										)}
+									</TableCell>
+									<TableCell>
 										<div className="flex justify-end gap-1">
+											<Button asChild variant="ghost" size="sm">
+												<Link to="/invoices" search={{ clientId: c._id }}>
+													<Receipt /> Invoices
+												</Link>
+											</Button>
 											<Button
 												variant="ghost"
 												size="icon-sm"

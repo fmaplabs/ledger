@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { Pencil, Receipt } from "lucide-react";
+import { FileText, Pencil, Receipt } from "lucide-react";
 import { useState } from "react";
 
 import { GenerateInvoiceDialog } from "@/components/generate-invoice-dialog";
@@ -100,6 +100,11 @@ function ProjectsPage() {
 									</TableCell>
 									<TableCell>
 										<div className="flex justify-end gap-1">
+											<Button asChild variant="ghost" size="sm">
+												<Link to="/invoices" search={{ projectId: p._id }}>
+													<FileText /> Invoices
+												</Link>
+											</Button>
 											<Button
 												variant="outline"
 												size="sm"

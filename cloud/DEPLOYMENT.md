@@ -90,8 +90,13 @@ In the Stripe dashboard (use **test mode** first):
 - Copy the **Secret key** (`sk_...`) and **Publishable key** (`pk_...`).
 - Add a **Webhook** pointing at your prod Convex site domain:
   `https://<prod-convex-name>.convex.site/stripe/webhook`. Subscribe to at least
-  `invoice.finalized`, `invoice.paid`, `invoice.payment_failed`, and `invoice.voided`.
-  Note its **signing secret** (`whsec_...`).
+  `invoice.finalized`, `invoice.paid`, `invoice.payment_failed`, `invoice.voided`,
+  and — for two-way customer sync — `customer.created`, `customer.updated`, and
+  `customer.deleted`. Note its **signing secret** (`whsec_...`).
+  > The `@convex-dev/stripe` component does **not** subscribe events for you: any
+  > event type not enabled on the endpoint simply never arrives. (Local
+  > `stripe listen --forward-to <dev-convex-site>/stripe/webhook` forwards all
+  > events, so dev needs no extra flag.)
 
 ```bash
 # From this directory (cloud/):

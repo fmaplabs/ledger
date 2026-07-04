@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ExternalLink, FileText, X } from "lucide-react";
 
+import { MobileCard, MobileCardList } from "@/components/mobile-card";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,48 @@ function InvoicesPage() {
 				</div>
 			) : null}
 
-			<Card className="p-0">
+			{/* Mobile: one card per invoice. */}
+			<MobileCardList>
+				{invoices === undefined ? (
+					<p className="text-sm text-muted-foreground">Loading…</p>
+				) : invoices.length === 0 ? (
+					<p className="text-sm text-muted-foreground">
+						No invoices yet. Generate one from a project.
+					</p>
+				) : (
+					invoices.map((inv) => {
+						const status = STATUS[inv.status] ?? {
+							label: inv.status,
+							variant: "neutral" as const,
+						};
+						return (
+							<MobileCard
+								key={inv._id}
+								title={inv.clientName}
+								subtitle={inv.projectName}
+								fields={[
+									{ label: "Hours", value: `${inv.hours.toFixed(2)}h` },
+									{
+										label: "Amount",
+										value: formatCents(inv.amountCents, inv.currency),
+									},
+									{
+										label: "Status",
+										value: (
+											<Badge variant={status.variant}>{status.label}</Badge>
+										),
+									},
+									{ label: "Created", value: dateFmt.format(inv.createdAt) },
+								]}
+								actions={<InvoiceActions invoice={inv} />}
+							/>
+						);
+					})
+				)}
+			</MobileCardList>
+
+			{/* Desktop: full table. */}
+			<Card className="hidden p-0 md:block">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -132,28 +174,7 @@ function InvoicesPage() {
 										</TableCell>
 										<TableCell>
 											<div className="flex justify-end gap-1">
-												{inv.invoicePdfUrl ? (
-													<Button asChild variant="ghost" size="sm">
-														<a
-															href={inv.invoicePdfUrl}
-															target="_blank"
-															rel="noreferrer"
-														>
-															<FileText /> PDF
-														</a>
-													</Button>
-												) : null}
-												{inv.hostedInvoiceUrl && inv.status !== "paid" ? (
-													<Button asChild variant="outline" size="sm">
-														<a
-															href={inv.hostedInvoiceUrl}
-															target="_blank"
-															rel="noreferrer"
-														>
-															Pay <ExternalLink />
-														</a>
-													</Button>
-												) : null}
+												<InvoiceActions invoice={inv} />
 											</div>
 										</TableCell>
 									</TableRow>
@@ -164,5 +185,35 @@ function InvoicesPage() {
 				</Table>
 			</Card>
 		</div>
+	);
+}
+
+/** Per-invoice PDF / Pay links, shared by the table and mobile cards. */
+function InvoiceActions({
+	invoice,
+}: {
+	invoice: {
+		invoicePdfUrl?: string | null;
+		hostedInvoiceUrl?: string | null;
+		status: string;
+	};
+}) {
+	return (
+		<>
+			{invoice.invoicePdfUrl ? (
+				<Button asChild variant="ghost" size="sm">
+					<a href={invoice.invoicePdfUrl} target="_blank" rel="noreferrer">
+						<FileText /> PDF
+					</a>
+				</Button>
+			) : null}
+			{invoice.hostedInvoiceUrl && invoice.status !== "paid" ? (
+				<Button asChild variant="outline" size="sm">
+					<a href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer">
+						Pay <ExternalLink />
+					</a>
+				</Button>
+			) : null}
+		</>
 	);
 }

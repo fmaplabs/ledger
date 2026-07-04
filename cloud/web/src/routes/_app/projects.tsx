@@ -4,6 +4,7 @@ import { FileText, Pencil, Receipt } from "lucide-react";
 import { useState } from "react";
 
 import { GenerateInvoiceDialog } from "@/components/generate-invoice-dialog";
+import { MobileCard, MobileCardList } from "@/components/mobile-card";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,7 +30,9 @@ import { api, type Id } from "@/convex-api";
 import { centsToInput, formatRate, inputToCents } from "@/lib/money";
 import { formatDurationMs } from "@/lib/time";
 
-export const Route = createFileRoute("/_app/projects")({ component: ProjectsPage });
+export const Route = createFileRoute("/_app/projects")({
+	component: ProjectsPage,
+});
 
 type ProjectRow = {
 	_id: Id<"projects">;
@@ -56,7 +59,50 @@ function ProjectsPage() {
 				description="Discovered from your tracked work. Assign each to a client to bill it."
 			/>
 
-			<Card className="p-0">
+			{/* Mobile: one card per project. */}
+			<MobileCardList>
+				{projects === undefined ? (
+					<p className="text-sm text-muted-foreground">Loading…</p>
+				) : projects.length === 0 ? (
+					<p className="text-sm text-muted-foreground">
+						No projects yet. They appear here once the CLI syncs tracked work.
+					</p>
+				) : (
+					projects.map((p) => (
+						<MobileCard
+							key={p._id}
+							title={p.displayName ?? p.name}
+							subtitle={
+								p.clientName ?? (
+									<span className="text-muted-foreground">Unassigned</span>
+								)
+							}
+							fields={[
+								{
+									label: "Rate",
+									value: formatRate(p.effectiveRateCents, currency),
+								},
+								{
+									label: "Unbilled",
+									value: p.unbilledMsCache
+										? formatDurationMs(p.unbilledMsCache)
+										: "—",
+								},
+							]}
+							actions={
+								<ProjectActions
+									project={p}
+									onGenerate={() => setGenerating(p)}
+									onEdit={() => setEditing(p)}
+								/>
+							}
+						/>
+					))
+				)}
+			</MobileCardList>
+
+			{/* Desktop: full table. */}
+			<Card className="hidden p-0 md:block">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -96,36 +142,17 @@ function ProjectsPage() {
 										{formatRate(p.effectiveRateCents, currency)}
 									</TableCell>
 									<TableCell className="text-muted-foreground">
-										{p.unbilledMsCache ? formatDurationMs(p.unbilledMsCache) : "—"}
+										{p.unbilledMsCache
+											? formatDurationMs(p.unbilledMsCache)
+											: "—"}
 									</TableCell>
 									<TableCell>
 										<div className="flex justify-end gap-1">
-											<Button asChild variant="ghost" size="sm">
-												<Link to="/invoices" search={{ projectId: p._id }}>
-													<FileText /> Invoices
-												</Link>
-											</Button>
-											<Button
-												variant="outline"
-												size="sm"
-												disabled={!p.clientId}
-												title={
-													p.clientId
-														? undefined
-														: "Assign a client before invoicing"
-												}
-												onClick={() => setGenerating(p)}
-											>
-												<Receipt /> Generate
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												aria-label={`Edit ${p.displayName ?? p.name}`}
-												onClick={() => setEditing(p)}
-											>
-												<Pencil />
-											</Button>
+											<ProjectActions
+												project={p}
+												onGenerate={() => setGenerating(p)}
+												onEdit={() => setEditing(p)}
+											/>
 										</div>
 									</TableCell>
 								</TableRow>
@@ -147,6 +174,46 @@ function ProjectsPage() {
 				/>
 			) : null}
 		</div>
+	);
+}
+
+/** Per-project action buttons, shared by the table and mobile cards. */
+function ProjectActions({
+	project,
+	onGenerate,
+	onEdit,
+}: {
+	project: ProjectRow;
+	onGenerate: () => void;
+	onEdit: () => void;
+}) {
+	return (
+		<>
+			<Button asChild variant="ghost" size="sm">
+				<Link to="/invoices" search={{ projectId: project._id }}>
+					<FileText /> Invoices
+				</Link>
+			</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={!project.clientId}
+				title={
+					project.clientId ? undefined : "Assign a client before invoicing"
+				}
+				onClick={onGenerate}
+			>
+				<Receipt /> Generate
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				aria-label={`Edit ${project.displayName ?? project.name}`}
+				onClick={onEdit}
+			>
+				<Pencil />
+			</Button>
+		</>
 	);
 }
 

@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, ExternalLink, Pencil, Plus, Receipt } from "lucide-react";
 import { useState } from "react";
 
+import { MobileCard, MobileCardList } from "@/components/mobile-card";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,9 @@ import {
 import { api, type Id } from "@/convex-api";
 import { centsToInput, formatRate, inputToCents } from "@/lib/money";
 
-export const Route = createFileRoute("/_app/clients")({ component: ClientsPage });
+export const Route = createFileRoute("/_app/clients")({
+	component: ClientsPage,
+});
 
 type ClientRow = {
 	_id: Id<"clients">;
@@ -55,7 +58,46 @@ function ClientsPage() {
 				</Button>
 			</PageHeader>
 
-			<Card className="p-0">
+			{/* Mobile: one card per client. */}
+			<MobileCardList>
+				{clients === undefined ? (
+					<p className="text-sm text-muted-foreground">Loading…</p>
+				) : clients.length === 0 ? (
+					<p className="text-sm text-muted-foreground">
+						No clients yet. Add one to start assigning projects.
+					</p>
+				) : (
+					clients.map((c) => (
+						<MobileCard
+							key={c._id}
+							title={c.name}
+							subtitle={c.email}
+							fields={[
+								{
+									label: "Rate",
+									value:
+										c.rateCents === undefined ? (
+											<span className="text-muted-foreground">Default</span>
+										) : (
+											formatRate(c.rateCents, currency)
+										),
+								},
+								{ label: "Stripe", value: <StripeStatus client={c} /> },
+							]}
+							actions={
+								<ClientActions
+									client={c}
+									onEdit={() => setEditing(c)}
+									onArchive={() => archive({ id: c._id })}
+								/>
+							}
+						/>
+					))
+				)}
+			</MobileCardList>
+
+			{/* Desktop: full table. */}
+			<Card className="hidden p-0 md:block">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -94,46 +136,15 @@ function ClientsPage() {
 										)}
 									</TableCell>
 									<TableCell>
-										{c.stripeSynced && c.stripeCustomerId ? (
-											// Synced → link the badge to the Stripe dashboard. The
-											// mode-agnostic URL resolves to the customer's own
-											// (test/live) mode.
-											<a
-												href={`https://dashboard.stripe.com/customers/${c.stripeCustomerId}`}
-												target="_blank"
-												rel="noreferrer"
-												aria-label={`Open ${c.name} in Stripe`}
-											>
-												<Badge variant="success">
-													<Check /> Synced <ExternalLink />
-												</Badge>
-											</a>
-										) : (
-											<Badge variant="neutral">Pending</Badge>
-										)}
+										<StripeStatus client={c} />
 									</TableCell>
 									<TableCell>
 										<div className="flex justify-end gap-1">
-											<Button asChild variant="ghost" size="sm">
-												<Link to="/invoices" search={{ clientId: c._id }}>
-													<Receipt /> Invoices
-												</Link>
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												aria-label={`Edit ${c.name}`}
-												onClick={() => setEditing(c)}
-											>
-												<Pencil />
-											</Button>
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() => archive({ id: c._id })}
-											>
-												Archive
-											</Button>
+											<ClientActions
+												client={c}
+												onEdit={() => setEditing(c)}
+												onArchive={() => archive({ id: c._id })}
+											/>
 										</div>
 									</TableCell>
 								</TableRow>
@@ -150,6 +161,58 @@ function ClientsPage() {
 				/>
 			) : null}
 		</div>
+	);
+}
+
+/** The synced/pending Stripe badge, shared by the table and mobile cards. */
+function StripeStatus({ client }: { client: ClientRow }) {
+	return client.stripeSynced && client.stripeCustomerId ? (
+		// Synced → link the badge to the Stripe dashboard. The mode-agnostic URL
+		// resolves to the customer's own (test/live) mode.
+		<a
+			href={`https://dashboard.stripe.com/customers/${client.stripeCustomerId}`}
+			target="_blank"
+			rel="noreferrer"
+			aria-label={`Open ${client.name} in Stripe`}
+		>
+			<Badge variant="success">
+				<Check /> Synced <ExternalLink />
+			</Badge>
+		</a>
+	) : (
+		<Badge variant="neutral">Pending</Badge>
+	);
+}
+
+/** Per-client action buttons, shared by the table and mobile cards. */
+function ClientActions({
+	client,
+	onEdit,
+	onArchive,
+}: {
+	client: ClientRow;
+	onEdit: () => void;
+	onArchive: () => void;
+}) {
+	return (
+		<>
+			<Button asChild variant="ghost" size="sm">
+				<Link to="/invoices" search={{ clientId: client._id }}>
+					<Receipt /> Invoices
+				</Link>
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				aria-label={`Edit ${client.name}`}
+				onClick={onEdit}
+			>
+				<Pencil />
+			</Button>
+			<Button variant="ghost" size="sm" onClick={onArchive}>
+				Archive
+			</Button>
+		</>
 	);
 }
 

@@ -14,7 +14,7 @@ export function RevenueChart({
 
 	return (
 		<div>
-			<div className="flex h-48 items-end gap-2 border-b pb-px">
+			<div className="flex h-48 items-end gap-1 border-b pb-px sm:gap-2">
 				{data.map((d, i) => {
 					const pct = d.cents <= 0 ? 0 : Math.max(3, (d.cents / max) * 100);
 					return (
@@ -33,7 +33,7 @@ export function RevenueChart({
 					);
 				})}
 			</div>
-			<div className="mt-2 flex gap-2">
+			<div className="mt-2 flex gap-1 sm:gap-2">
 				{data.map((d, i) => (
 					<span
 						key={`${d.label}-${i}`}

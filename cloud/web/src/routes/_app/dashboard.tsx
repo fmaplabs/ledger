@@ -4,7 +4,9 @@ import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { RangeSelector, WINDOWS } from "@/components/range-selector";
 import { RevenueChart } from "@/components/revenue-chart";
+import { TimeBarList } from "@/components/time-bar-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +16,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { UnbilledRepoTable } from "@/components/unbilled-repo-table";
 import { api } from "@/convex-api";
 import { formatCents } from "@/lib/money";
 
@@ -36,6 +39,10 @@ function DashboardPage() {
 	const summary = useQuery(api.revenue.summary, {});
 	const series = useQuery(api.revenue.monthlySeries, {});
 	const invoices = useQuery(api.invoices.list, {});
+	const repo = useQuery(api.revenue.repoUnbilledBreakdown, {});
+	// Default to the 1-week window (WINDOWS[1]); the selector drives re-queries.
+	const [windowMs, setWindowMs] = useState(WINDOWS[1].ms);
+	const activity = useQuery(api.revenue.activityByWindow, { windowMs });
 	const refresh = useAction(api.projects.refreshUnbilledEstimates);
 	const [refreshing, setRefreshing] = useState(false);
 
@@ -131,6 +138,85 @@ function DashboardPage() {
 								</div>
 							))
 						)}
+					</CardContent>
+				</Card>
+			</div>
+
+			<Card className="mt-4">
+				<CardHeader>
+					<CardTitle>Unbilled since last invoice</CardTitle>
+					<CardDescription>
+						Commits and time logged per repo since each client's last invoice
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="flex flex-col gap-3">
+					<UnbilledRepoTable rows={repo?.rows} />
+					{repo?.rows.some((r) => r.truncated) ? (
+						<p className="text-xs text-muted-foreground">
+							Some repos have more history than shown; totals may be partial.
+						</p>
+					) : null}
+				</CardContent>
+			</Card>
+
+			<div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+				<h2 className="font-heading text-lg font-semibold tracking-tight">
+					Time tracked
+				</h2>
+				<RangeSelector value={windowMs} onChange={setWindowMs} />
+			</div>
+
+			<div className="mt-4 grid gap-4 lg:grid-cols-2">
+				<Card>
+					<CardHeader>
+						<CardTitle>Time by client</CardTitle>
+						<CardDescription>
+							Billable hours in the selected window
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-col gap-3">
+						<TimeBarList
+							data={
+								activity
+									? activity.byClient.map((c) => ({
+											label: c.clientName,
+											hours: c.hours,
+										}))
+									: undefined
+							}
+						/>
+						{activity?.truncated ? (
+							<p className="text-xs text-muted-foreground">
+								Showing the most recent activity — narrow the window for exact
+								totals.
+							</p>
+						) : null}
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle>Time by device</CardTitle>
+						<CardDescription>Hours and commits per device</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-col gap-3">
+						<TimeBarList
+							data={
+								activity
+									? activity.byDevice.map((d) => ({
+											label: d.deviceName,
+											hours: d.hours,
+										}))
+									: undefined
+							}
+							commitCounts={activity?.byDevice.map((d) => d.commitCount)}
+						/>
+						{activity?.truncated ? (
+							<p className="text-xs text-muted-foreground">
+								Showing the most recent activity — narrow the window for exact
+								totals.
+							</p>
+						) : null}
 					</CardContent>
 				</Card>
 			</div>

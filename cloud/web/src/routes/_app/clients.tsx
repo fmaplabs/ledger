@@ -26,6 +26,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { api, type Id } from "@/convex-api";
+import { errorMessage } from "@/lib/errors";
 import { centsToInput, formatRate, inputToCents } from "@/lib/money";
 
 export const Route = createFileRoute("/_app/clients")({
@@ -254,7 +255,7 @@ function ClientDialog({
 			}
 			onClose();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to save.");
+			setError(errorMessage(err, "Failed to save."));
 			setSaving(false);
 		}
 	}

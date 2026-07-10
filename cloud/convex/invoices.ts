@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import {
 	action,
 	internalMutation,
@@ -58,7 +58,7 @@ export const previewUnbilled = query({
 		const userId = await requireUserId(ctx);
 		const project = await ctx.db.get(args.projectId);
 		if (project === null || project.userId !== userId) {
-			throw new Error("Project not found");
+			throw new ConvexError("Project not found");
 		}
 		const settings = await loadEffectiveSettings(ctx, userId);
 		const client = project.clientId ? await ctx.db.get(project.clientId) : null;
@@ -148,14 +148,14 @@ export const claimUnbilled = internalMutation({
 		const userId = await requireUserId(ctx);
 		const project = await ctx.db.get(args.projectId);
 		if (project === null || project.userId !== userId) {
-			throw new Error("Project not found");
+			throw new ConvexError("Project not found");
 		}
 		if (project.clientId === undefined) {
-			throw new Error("Assign this project to a client before invoicing.");
+			throw new ConvexError("Assign this project to a client before invoicing.");
 		}
 		const client = await ctx.db.get(project.clientId);
 		if (client === null || client.userId !== userId) {
-			throw new Error("Client not found");
+			throw new ConvexError("Client not found");
 		}
 		const settings = await loadEffectiveSettings(ctx, userId);
 		const rateCents = resolveRateCents(project, client, settings);
@@ -607,7 +607,7 @@ export const markPaid = mutation({
 		const userId = await requireUserId(ctx);
 		const invoice = await ctx.db.get(args.id);
 		if (invoice === null || invoice.userId !== userId) {
-			throw new Error("Invoice not found");
+			throw new ConvexError("Invoice not found");
 		}
 		await ctx.db.patch(args.id, { status: "paid", paidAt: Date.now() });
 		return null;

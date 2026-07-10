@@ -1,4 +1,5 @@
 import type { GenericActionCtx, GenericQueryCtx } from "convex/server";
+import { ConvexError } from "convex/values";
 import type { DataModel } from "../_generated/dataModel";
 
 // The authenticated user's id. We use WorkOS `identity.subject` (not
@@ -10,7 +11,7 @@ export async function requireUserId(ctx: {
 }): Promise<string> {
 	const identity = await ctx.auth.getUserIdentity();
 	if (identity === null) {
-		throw new Error("Not authenticated");
+		throw new ConvexError("Not authenticated");
 	}
 	return identity.subject;
 }

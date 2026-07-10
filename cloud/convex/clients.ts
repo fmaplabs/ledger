@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -21,7 +21,7 @@ function assertRate(rateCents: number | null | undefined) {
 		typeof rateCents === "number" &&
 		(!Number.isInteger(rateCents) || rateCents < 0)
 	) {
-		throw new Error("rateCents must be a non-negative integer");
+		throw new ConvexError("rateCents must be a non-negative integer");
 	}
 }
 
@@ -57,7 +57,7 @@ export const create = mutation({
 	returns: v.id("clients"),
 	handler: async (ctx, args) => {
 		const userId = await requireUserId(ctx);
-		if (args.name.trim() === "") throw new Error("name is required");
+		if (args.name.trim() === "") throw new ConvexError("name is required");
 		assertRate(args.rateCents);
 		const id = await ctx.db.insert("clients", {
 			userId,
@@ -88,7 +88,7 @@ export const update = mutation({
 		const userId = await requireUserId(ctx);
 		const client = await ctx.db.get(args.id);
 		if (client === null || client.userId !== userId) {
-			throw new Error("Client not found");
+			throw new ConvexError("Client not found");
 		}
 		assertRate(args.rateCents);
 
@@ -119,7 +119,7 @@ export const archive = mutation({
 		const userId = await requireUserId(ctx);
 		const client = await ctx.db.get(args.id);
 		if (client === null || client.userId !== userId) {
-			throw new Error("Client not found");
+			throw new ConvexError("Client not found");
 		}
 		// Asymmetry vs create/update: archiving does NOT push. Leaving the Stripe
 		// customer in place is the standard, non-destructive choice (deleting it

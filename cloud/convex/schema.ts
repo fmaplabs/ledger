@@ -114,4 +114,20 @@ export default defineSchema({
 		// Global (no userId): the Stripe webhook has no user context and Stripe
 		// ids are globally unique. Tolerates the pre-finalize `undefined`.
 		.index("by_stripe_invoice", ["stripeInvoiceId"]),
+	// A manually-declared unit of billable work for a client. `totalTimeMs` is
+	// the declared duration in integer milliseconds — same unit as
+	// `unbilledMsCache`/`idleThresholdMs`, so ticket time feeds the existing
+	// ms → hours → cents billing math with no unit conversion. `externalId` is
+	// the id in the external tracker; unique per user (enforced in the mutation).
+	tickets: defineTable({
+		userId: v.string(),
+		externalId: v.string(),
+		description: v.optional(v.string()),
+		clientId: v.id("clients"),
+		totalTimeMs: v.number(),
+		projectId: v.id("projects"),
+		name: v.string(),
+	})
+		.index("by_user_external", ["userId", "externalId"])
+		.index("by_user_client", ["userId", "clientId"]),
 });

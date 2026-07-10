@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import {
 	action,
 	internalMutation,
@@ -74,18 +74,18 @@ export const update = mutation({
 		const userId = await requireUserId(ctx);
 		const project = await ctx.db.get(args.id);
 		if (project === null || project.userId !== userId) {
-			throw new Error("Project not found");
+			throw new ConvexError("Project not found");
 		}
 		if (
 			typeof args.rateCents === "number" &&
 			(!Number.isInteger(args.rateCents) || args.rateCents < 0)
 		) {
-			throw new Error("rateCents must be a non-negative integer");
+			throw new ConvexError("rateCents must be a non-negative integer");
 		}
 		if (args.clientId != null) {
 			const client = await ctx.db.get(args.clientId);
 			if (client === null || client.userId !== userId) {
-				throw new Error("Client not found");
+				throw new ConvexError("Client not found");
 			}
 		}
 
@@ -116,7 +116,7 @@ export const archive = mutation({
 		const userId = await requireUserId(ctx);
 		const project = await ctx.db.get(args.id);
 		if (project === null || project.userId !== userId) {
-			throw new Error("Project not found");
+			throw new ConvexError("Project not found");
 		}
 		await ctx.db.patch(args.id, { archived: true });
 		return null;

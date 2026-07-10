@@ -12,6 +12,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { api, type Id } from "@/convex-api";
+import { errorMessage } from "@/lib/errors";
 import { formatCents, formatRate } from "@/lib/money";
 
 type GenerateResult = {
@@ -48,7 +49,7 @@ export function GenerateInvoiceDialog({
 		} catch (err) {
 			setResult({
 				status: "error",
-				message: err instanceof Error ? err.message : "Failed to generate.",
+				message: errorMessage(err, "Failed to generate."),
 			});
 		} finally {
 			setBusy(false);

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { api } from "@/convex-api";
 import { CURRENCIES } from "@/lib/currencies";
+import { errorMessage } from "@/lib/errors";
 import { centsToInput, inputToCents } from "@/lib/money";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
@@ -56,7 +57,7 @@ function SettingsPage() {
 			setSaved(true);
 			setTimeout(() => setSaved(false), 2000);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to save.");
+			setError(errorMessage(err, "Failed to save."));
 		} finally {
 			setSaving(false);
 		}

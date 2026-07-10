@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import { requireUserId } from "./lib/auth";
 
@@ -76,13 +76,13 @@ export const update = mutation({
 		const userId = await requireUserId(ctx);
 
 		if (!Number.isInteger(args.defaultRateCents) || args.defaultRateCents < 0) {
-			throw new Error("defaultRateCents must be a non-negative integer");
+			throw new ConvexError("defaultRateCents must be a non-negative integer");
 		}
 		if (!SUPPORTED_CURRENCIES.includes(args.currency as never)) {
-			throw new Error(`Unsupported currency: ${args.currency}`);
+			throw new ConvexError(`Unsupported currency: ${args.currency}`);
 		}
 		if (args.idleThresholdMs !== undefined && args.idleThresholdMs <= 0) {
-			throw new Error("idleThresholdMs must be positive");
+			throw new ConvexError("idleThresholdMs must be positive");
 		}
 
 		const existing = await ctx.db

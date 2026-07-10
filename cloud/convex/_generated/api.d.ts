@@ -21,6 +21,7 @@ import type * as revenue from "../revenue.js";
 import type * as settings from "../settings.js";
 import type * as stripe from "../stripe.js";
 import type * as sync from "../sync.js";
+import type * as tickets from "../tickets.js";
 
 import type {
   ApiFromModules,
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   stripe: typeof stripe;
   sync: typeof sync;
+  tickets: typeof tickets;
 }>;
 
 /**

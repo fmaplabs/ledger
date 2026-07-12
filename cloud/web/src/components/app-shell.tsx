@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import * as React from "react";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -65,6 +66,7 @@ export function AppShell({
 						{email ? (
 							<span className="text-sm text-muted-foreground">{email}</span>
 						) : null}
+						<ModeToggle />
 						<Button variant="outline" size="sm" onClick={onSignOut}>
 							Sign out
 						</Button>

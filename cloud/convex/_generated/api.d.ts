@@ -14,6 +14,7 @@ import type * as customerSync from "../customerSync.js";
 import type * as http from "../http.js";
 import type * as invoices from "../invoices.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_invoices from "../lib/invoices.js";
 import type * as lib_rates from "../lib/rates.js";
 import type * as lib_sessions from "../lib/sessions.js";
 import type * as projects from "../projects.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   invoices: typeof invoices;
   "lib/auth": typeof lib_auth;
+  "lib/invoices": typeof lib_invoices;
   "lib/rates": typeof lib_rates;
   "lib/sessions": typeof lib_sessions;
   projects: typeof projects;

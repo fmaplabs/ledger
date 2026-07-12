@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppTicketsRouteImport } from './routes/_app/tickets'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProjectsRouteImport } from './routes/_app/projects'
 import { Route as AppInvoicesRouteImport } from './routes/_app/invoices'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
+import { Route as AppProjectsProjectIdRouteImport } from './routes/_app/projects_.$projectId'
+import { Route as AppClientsClientIdRouteImport } from './routes/_app/clients_.$clientId'
 
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
@@ -32,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppTicketsRoute = AppTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -63,6 +71,16 @@ const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
   path: '/api/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppProjectsProjectIdRoute = AppProjectsProjectIdRouteImport.update({
+  id: '/projects_/$projectId',
+  path: '/projects/$projectId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientsClientIdRoute = AppClientsClientIdRouteImport.update({
+  id: '/clients_/$clientId',
+  path: '/clients/$clientId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,6 +90,9 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof AppInvoicesRoute
   '/projects': typeof AppProjectsRoute
   '/settings': typeof AppSettingsRoute
+  '/tickets': typeof AppTicketsRoute
+  '/clients/$clientId': typeof AppClientsClientIdRoute
+  '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +103,9 @@ export interface FileRoutesByTo {
   '/invoices': typeof AppInvoicesRoute
   '/projects': typeof AppProjectsRoute
   '/settings': typeof AppSettingsRoute
+  '/tickets': typeof AppTicketsRoute
+  '/clients/$clientId': typeof AppClientsClientIdRoute
+  '/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -94,6 +118,9 @@ export interface FileRoutesById {
   '/_app/invoices': typeof AppInvoicesRoute
   '/_app/projects': typeof AppProjectsRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/tickets': typeof AppTicketsRoute
+  '/_app/clients_/$clientId': typeof AppClientsClientIdRoute
+  '/_app/projects_/$projectId': typeof AppProjectsProjectIdRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +133,9 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/projects'
     | '/settings'
+    | '/tickets'
+    | '/clients/$clientId'
+    | '/projects/$projectId'
     | '/api/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +146,9 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/projects'
     | '/settings'
+    | '/tickets'
+    | '/clients/$clientId'
+    | '/projects/$projectId'
     | '/api/auth/callback'
   id:
     | '__root__'
@@ -127,6 +160,9 @@ export interface FileRouteTypes {
     | '/_app/invoices'
     | '/_app/projects'
     | '/_app/settings'
+    | '/_app/tickets'
+    | '/_app/clients_/$clientId'
+    | '/_app/projects_/$projectId'
     | '/api/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +195,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/tickets': {
+      id: '/_app/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AppTicketsRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -202,6 +245,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/projects_/$projectId': {
+      id: '/_app/projects_/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AppProjectsProjectIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/clients_/$clientId': {
+      id: '/_app/clients_/$clientId'
+      path: '/clients/$clientId'
+      fullPath: '/clients/$clientId'
+      preLoaderRoute: typeof AppClientsClientIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -211,6 +268,9 @@ interface AppRouteChildren {
   AppInvoicesRoute: typeof AppInvoicesRoute
   AppProjectsRoute: typeof AppProjectsRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTicketsRoute: typeof AppTicketsRoute
+  AppClientsClientIdRoute: typeof AppClientsClientIdRoute
+  AppProjectsProjectIdRoute: typeof AppProjectsProjectIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -219,6 +279,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppInvoicesRoute: AppInvoicesRoute,
   AppProjectsRoute: AppProjectsRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTicketsRoute: AppTicketsRoute,
+  AppClientsClientIdRoute: AppClientsClientIdRoute,
+  AppProjectsProjectIdRoute: AppProjectsProjectIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

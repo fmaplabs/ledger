@@ -7,9 +7,10 @@ import {
 	query,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { requireUserId } from "./lib/auth";
-import { loadClientMap } from "./clients";
-import { loadEffectiveSettings } from "./settings";
+import { type ClientInfo, loadClientMap } from "./clients";
+import { type EffectiveSettings, loadEffectiveSettings } from "./settings";
 import { resolveRateCents } from "./lib/rates";
 import { billableMs, type DeviceHeartbeat } from "./lib/sessions";
 
@@ -24,6 +25,24 @@ const projectView = v.object({
 	unbilledMsCache: v.optional(v.number()),
 	unbilledCacheUpdatedAt: v.optional(v.number()),
 });
+
+function toProjectView(
+	p: Doc<"projects">,
+	client: ClientInfo | undefined,
+	settings: EffectiveSettings,
+) {
+	return {
+		_id: p._id,
+		name: p.name,
+		displayName: p.displayName,
+		clientId: p.clientId,
+		clientName: client?.name,
+		rateCents: p.rateCents,
+		effectiveRateCents: resolveRateCents(p, client, settings),
+		unbilledMsCache: p.unbilledMsCache,
+		unbilledCacheUpdatedAt: p.unbilledCacheUpdatedAt,
+	};
+}
 
 export const list = query({
 	args: {},
@@ -44,20 +63,49 @@ export const list = query({
 			.sort((a, b) =>
 				(a.displayName ?? a.name).localeCompare(b.displayName ?? b.name),
 			)
-			.map((p) => {
-				const client = p.clientId ? clientMap.get(p.clientId) : undefined;
-				return {
-					_id: p._id,
-					name: p.name,
-					displayName: p.displayName,
-					clientId: p.clientId,
-					clientName: client?.name,
-					rateCents: p.rateCents,
-					effectiveRateCents: resolveRateCents(p, client, settings),
-					unbilledMsCache: p.unbilledMsCache,
-					unbilledCacheUpdatedAt: p.unbilledCacheUpdatedAt,
-				};
-			});
+			.map((p) =>
+				toProjectView(
+					p,
+					p.clientId ? clientMap.get(p.clientId) : undefined,
+					settings,
+				),
+			);
+	},
+});
+
+export const get = query({
+	// The raw route param, not v.id: a malformed URL must read as null (the
+	// "not found" page), not throw an ArgumentValidationError into the router.
+	args: { id: v.string() },
+	returns: v.union(projectView, v.null()),
+	handler: async (ctx, args) => {
+		const userId = await requireUserId(ctx);
+		const id = ctx.db.normalizeId("projects", args.id);
+		const project = id === null ? null : await ctx.db.get(id);
+		// Missing and foreign read as null so the detail page renders "not
+		// found" on a stale URL. Archived projects stay reachable: their
+		// tickets still link here, and a live-looking link must not dead-end.
+		if (project === null || project.userId !== userId) {
+			return null;
+		}
+		// One targeted read instead of the full client map — this subscription
+		// shouldn't re-run when unrelated clients change.
+		const [settings, client] = await Promise.all([
+			loadEffectiveSettings(ctx, userId),
+			project.clientId ? ctx.db.get(project.clientId) : Promise.resolve(null),
+		]);
+		return toProjectView(
+			project,
+			client === null
+				? undefined
+				: {
+						name: client.name,
+						email: client.email,
+						rateCents: client.rateCents,
+						stripeCustomerId: client.stripeCustomerId,
+					},
+			settings,
+		);
 	},
 });
 

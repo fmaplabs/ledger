@@ -128,6 +128,10 @@ export default defineSchema({
 		projectId: v.id("projects"),
 		name: v.string(),
 	})
+		// `by_user` orders by _creationTime within a user: list pages read the
+		// newest 500 with a desc scan, so growth past the cap drops OLD rows.
+		.index("by_user", ["userId"])
 		.index("by_user_external", ["userId", "externalId"])
-		.index("by_user_client", ["userId", "clientId"]),
+		.index("by_user_client", ["userId", "clientId"])
+		.index("by_user_project", ["userId", "projectId"]),
 });

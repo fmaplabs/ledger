@@ -71,7 +71,15 @@ function ClientsPage() {
 					clients.map((c) => (
 						<MobileCard
 							key={c._id}
-							title={c.name}
+							title={
+								<Link
+									to="/clients/$clientId"
+									params={{ clientId: c._id }}
+									className="text-primary underline-offset-4 hover:underline"
+								>
+									{c.name}
+								</Link>
+							}
 							subtitle={c.email}
 							fields={[
 								{
@@ -125,7 +133,15 @@ function ClientsPage() {
 						) : (
 							clients.map((c) => (
 								<TableRow key={c._id}>
-									<TableCell className="font-medium">{c.name}</TableCell>
+									<TableCell className="font-medium">
+										<Link
+											to="/clients/$clientId"
+											params={{ clientId: c._id }}
+											className="text-primary underline-offset-4 hover:underline"
+										>
+											{c.name}
+										</Link>
+									</TableCell>
 									<TableCell className="text-muted-foreground">
 										{c.email}
 									</TableCell>

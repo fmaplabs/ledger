@@ -72,7 +72,15 @@ function ProjectsPage() {
 					projects.map((p) => (
 						<MobileCard
 							key={p._id}
-							title={p.displayName ?? p.name}
+							title={
+								<Link
+									to="/projects/$projectId"
+									params={{ projectId: p._id }}
+									className="text-primary underline-offset-4 hover:underline"
+								>
+									{p.displayName ?? p.name}
+								</Link>
+							}
 							subtitle={
 								p.clientName ?? (
 									<span className="text-muted-foreground">Unassigned</span>
@@ -132,7 +140,13 @@ function ProjectsPage() {
 							projects.map((p) => (
 								<TableRow key={p._id}>
 									<TableCell className="font-medium">
-										{p.displayName ?? p.name}
+										<Link
+											to="/projects/$projectId"
+											params={{ projectId: p._id }}
+											className="text-primary underline-offset-4 hover:underline"
+										>
+											{p.displayName ?? p.name}
+										</Link>
 									</TableCell>
 									<TableCell>
 										{p.clientName ?? (

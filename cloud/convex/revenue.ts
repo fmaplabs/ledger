@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { requireUserId } from "./lib/auth";
 import { loadEffectiveSettings } from "./settings";
 import { loadClientMap } from "./clients";
+import { isSuccessfulInvoice } from "./lib/invoices";
 import { resolveRateCents } from "./lib/rates";
 import { billableMs } from "./lib/sessions";
 
@@ -184,9 +185,7 @@ export const repoUnbilledBreakdown = query({
 			.take(1000);
 		const clientLastInvoice = new Map<Id<"clients">, number>();
 		for (const inv of invoices) {
-			if (inv.status !== "open" && inv.status !== "paid" && inv.status !== "void") {
-				continue;
-			}
+			if (!isSuccessfulInvoice(inv)) continue;
 			const prev = clientLastInvoice.get(inv.clientId);
 			if (prev === undefined || inv.createdAt > prev) {
 				clientLastInvoice.set(inv.clientId, inv.createdAt);

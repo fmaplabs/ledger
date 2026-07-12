@@ -111,6 +111,7 @@ export function AppShell({
 										{email}
 									</span>
 								) : null}
+								<ModeToggle />
 								<Button variant="outline" size="sm" onClick={onSignOut}>
 									Sign out
 								</Button>
